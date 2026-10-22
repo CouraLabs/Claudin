@@ -14,24 +14,21 @@ export const agentHandlers: AgentHandlers = {
     yield { type: "agent.session.messages.received", messages };
   },
   async *"agent.session.create.requested"({ agents, cwd }, request) {
-    const agentSessionId = agents.createSession({ cwd, ...request.options }, request.agentMode);
+    const agentSessionId = agents.createSession({ cwd, ...request.options });
     yield { type: "agent.session.created", agentSessionId };
   },
   async *"agent.session.resume.requested"({ agents, cwd }, request) {
-    const agentSessionId = await agents.resumeSession(
-      request.agentSessionId,
-      { cwd, ...request.options },
-      request.agentMode,
-    );
+    const agentSessionId = await agents.resumeSession(request.agentSessionId, {
+      cwd,
+      ...request.options,
+    });
     yield { type: "agent.session.created", agentSessionId };
   },
   async *"agent.session.fork.requested"({ agents, cwd }, request) {
-    const agentSessionId = await agents.forkSession(
-      request.agentSessionId,
-      request.forkOptions,
-      { cwd, ...request.options },
-      request.agentMode,
-    );
+    const agentSessionId = await agents.forkSession(request.agentSessionId, request.forkOptions, {
+      cwd,
+      ...request.options,
+    });
     yield { type: "agent.session.created", agentSessionId };
   },
   async *"agent.prompt.requested"({ agents }, request) {
@@ -65,6 +62,10 @@ export const agentHandlers: AgentHandlers = {
     await agents.requireSession(request.agentSessionId).setModel(request.model);
     yield { type: "agent.model.changed", model: request.model };
   },
+  async *"agent.model.cycle.requested"({ agents }, request) {
+    const model = await agents.requireSession(request.agentSessionId).cycleModel();
+    if (model) yield { type: "agent.model.changed", model };
+  },
   async *"agent.effort.set.requested"({ agents }, request) {
     await agents.requireSession(request.agentSessionId).setEffort(request.effort);
     yield { type: "agent.effort.changed", effort: request.effort };
@@ -72,10 +73,6 @@ export const agentHandlers: AgentHandlers = {
   async *"agent.permission_mode.set.requested"({ agents }, request) {
     await agents.requireSession(request.agentSessionId).setPermissionMode(request.mode);
     yield { type: "agent.permission_mode.changed", mode: request.mode };
-  },
-  async *"agent.mode.set.requested"({ agents }, request) {
-    agents.switchMode(request.agentSessionId, request.mode);
-    yield { type: "agent.mode.changed", mode: request.mode };
   },
   async *"agent.models.requested"({ agents }, request) {
     const models = await agents.requireSession(request.agentSessionId).fetchModels();

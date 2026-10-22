@@ -219,15 +219,6 @@ test("queueing while idle behaves like a normal prompt", () => {
   expect(state.queuedTurns).toBe(0);
 });
 
-test("agent mode comes from session creation and changes", () => {
-  expect(play([]).agentMode).toBe("build");
-  const created = play([{ type: "agent.session.create.requested", options: {}, agentMode: "ask" }]);
-  expect(created.agentMode).toBe("ask");
-  const changed = reduceSessionState(created, { type: "agent.mode.changed", mode: "plan" });
-  expect(changed.agentMode).toBe("plan");
-  expect(changed.transcript.at(-1)).toMatchObject({ text: "Agent mode: Plan" });
-});
-
 test("model notices use the readable model name", () => {
   const state = play([{ type: "agent.model.changed", model: "claude-haiku-5-5" }]);
   expect(state.model).toBe("claude-haiku-5-5");
@@ -288,7 +279,7 @@ test("restoring replays events, settles open work and keeps the agent session", 
   const events = [
     { type: "session.created", sessionId: "s1" },
     { type: "agent.session.created", agentSessionId: "a1" },
-    { type: "agent.mode.changed", mode: "plan" },
+    { type: "agent.model.changed", model: "claude-haiku-5-5" },
     prompt,
     assistant("m1", [toolUse("t1", "Bash")]),
   ];
@@ -304,7 +295,7 @@ test("restoring replays events, settles open work and keeps the agent session", 
   expect(state).toMatchObject({
     sessionId: "s1",
     agentSessionId: "a1",
-    agentMode: "plan",
+    model: "claude-haiku-5-5",
     status: "idle",
   });
   expect(listToolCalls(state)[0]).toMatchObject({ status: "failed", error: "Interrupted" });

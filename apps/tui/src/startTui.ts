@@ -17,7 +17,6 @@ import { ScrollbackView } from "./components/scrollbackView.ts";
 import { SessionInfoBar } from "./components/sessionInfoBar.ts";
 import { StatusLine } from "./components/statusLine.ts";
 import { buildListView } from "./format/listViews.ts";
-import { readAgentModeColor } from "./format/statusColors.ts";
 import { isStatusBusy } from "./input/agentBusy.ts";
 import { bootSession, requestRateLimit } from "./input/agentSessionActions.ts";
 import { acceptAutocomplete, syncAutocomplete } from "./input/autocomplete.ts";
@@ -130,9 +129,7 @@ export async function startTui(
     input.setFocused(inputFocused);
     scrollback.setFocused(!inputFocused);
     input.setBusy(isStatusBusy(state.status));
-    input.setBorderColor(
-      inputFocused ? readAgentModeColor(state.agentMode) : Theme.border.separator,
-    );
+    input.setBorderColor(inputFocused ? Theme.status.success : Theme.border.separator);
     const awaitingId = (findAwaitingCalls(state)[0] ?? findQuestionCalls(state)[0])?.id;
     if (awaitingId && awaitingId !== revealedCallId) {
       scrollback.revealEntry(findGroupId(state, awaitingId) ?? "");

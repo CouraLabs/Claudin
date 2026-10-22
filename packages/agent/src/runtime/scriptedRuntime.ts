@@ -1,4 +1,5 @@
 import type {
+  ModelInfo,
   Options,
   SDKControlGetUsageResponse,
   SDKMessage,
@@ -43,6 +44,7 @@ export class ScriptedQuery implements AgentQuery {
     prompt: AsyncIterable<SDKUserMessage>,
     readonly options: Options,
     private turn: ScriptedTurn,
+    private models: ModelInfo[] = [],
   ) {
     void this.consume(prompt);
   }
@@ -73,7 +75,7 @@ export class ScriptedQuery implements AgentQuery {
   }
 
   async supportedModels() {
-    return [];
+    return this.models;
   }
 
   async supportedCommands() {
@@ -99,11 +101,12 @@ export class ScriptedQuery implements AgentQuery {
 export class ScriptedRuntime implements AgentRuntime {
   readonly queries: ScriptedQuery[] = [];
   readonly knownSessions = new Set<string>();
+  models: ModelInfo[] = [];
 
   constructor(private turn: ScriptedTurn = () => [RESULT_MESSAGE]) {}
 
   open = ({ prompt, options }: OpenQueryParams) => {
-    const scripted = new ScriptedQuery(prompt, options, this.turn);
+    const scripted = new ScriptedQuery(prompt, options, this.turn, this.models);
     this.queries.push(scripted);
     return scripted;
   };

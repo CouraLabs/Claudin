@@ -15,15 +15,13 @@ export const startAgentSession = (store: AppStore): void =>
   store.request({
     type: "agent.session.create.requested",
     options: buildSessionOptions(store),
-    agentMode: store.state.agentMode,
   });
 
 export function resumeAgentSession(store: AppStore): void {
-  const { agentMode } = store.state;
   const options = buildSessionOptions(store);
   const resumed = requestAgent(
     store,
-    { type: "agent.session.resume.requested", options, agentMode },
+    { type: "agent.session.resume.requested", options },
     "ignore",
   );
   if (!resumed) startAgentSession(store);

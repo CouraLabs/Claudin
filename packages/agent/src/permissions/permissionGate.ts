@@ -26,10 +26,7 @@ export class PermissionGate {
   approveAll = false;
   emit: Emit = () => {};
 
-  constructor(
-    private agentSessionId: string,
-    private deniedTools: string[] = [],
-  ) {}
+  constructor(private agentSessionId: string) {}
 
   listen(emit: Emit): void {
     this.emit = emit;
@@ -66,9 +63,6 @@ export class PermissionGate {
     toolUseId: string,
     signal: AbortSignal,
   ): Promise<PermissionResult> {
-    if (this.deniedTools.includes(toolName)) {
-      return Promise.resolve(denyTool(`${toolName} is not allowed in the current agent mode.`));
-    }
     if (SAFE_TOOLS.has(toolName) || this.approveAll) return Promise.resolve(allowTool(input));
     return this.open("approval", toolUseId, input, signal, {
       type: "agent.tool.approval.required",

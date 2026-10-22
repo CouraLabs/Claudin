@@ -1,5 +1,3 @@
-import type { AgentMode } from "@claudin/events";
-
 export const SEPARATOR = " ⋅ ";
 
 export const CONTEXT_GLYPH = "⛁";
@@ -25,12 +23,6 @@ const brailleCodeOffset = (index: number): number =>
 export const SPINNER_FRAMES = Array.from({ length: 256 }, (_, index) =>
   String.fromCodePoint(BRAILLE_BASE + brailleCodeOffset(index)),
 );
-
-export const AGENT_MODE_GLYPHS: Record<AgentMode, string> = {
-  ask: "⛓",
-  build: "⛏",
-  plan: "⑆",
-};
 
 export const GAUGE_GLYPHS = ["░", "▒", "▓", "█"] as const;
 

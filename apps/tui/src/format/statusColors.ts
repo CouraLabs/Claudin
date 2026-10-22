@@ -1,8 +1,4 @@
-import type { AgentMode } from "@claudin/events";
 import { Theme } from "../theme/colors.ts";
-
-export const readAgentModeColor = (mode: AgentMode): string =>
-  ({ ask: Theme.status.info, plan: Theme.status.warning, build: Theme.status.success })[mode];
 
 export const readEffortColor = (effort: string): string =>
   ({

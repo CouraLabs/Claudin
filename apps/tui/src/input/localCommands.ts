@@ -1,12 +1,4 @@
-import {
-  AGENT_MODE_LABELS,
-  type AgentMode,
-  agentModeSchema,
-  effortLevelSchema,
-  permissionModeSchema,
-  readModelLabel,
-  themeNameSchema,
-} from "@claudin/events";
+import { effortLevelSchema, permissionModeSchema, themeNameSchema } from "@claudin/events";
 import type { AppStore } from "../store/appStore.ts";
 import { isAgentBusy } from "./agentBusy.ts";
 import { requestAgent } from "./agentRequest.ts";
@@ -23,31 +15,9 @@ export function guardIdle(store: AppStore, action: string): boolean {
   return false;
 }
 
-export function switchAgentMode(store: AppStore, mode: AgentMode): void {
-  if (!guardIdle(store, "switching mode")) return;
-  if (store.state.agentMode === mode) {
-    const text = `Already in ${AGENT_MODE_LABELS[mode]} mode`;
-    return store.emit({ type: "ui.notice.posted", text });
-  }
-  requestAgent(store, { type: "agent.mode.set.requested", mode });
+export function cycleModel(store: AppStore): void {
+  requestAgent(store, { type: "agent.model.cycle.requested" });
 }
-
-export function cycleAgentMode(store: AppStore): void {
-  const modes = agentModeSchema.options;
-  const next = modes[(modes.indexOf(store.state.agentMode) + 1) % modes.length];
-  if (next) switchAgentMode(store, next);
-}
-
-const buildModeCommands = (): Record<string, SlashCommand> =>
-  Object.fromEntries(
-    agentModeSchema.options.map((mode) => [
-      `/${mode}`,
-      {
-        description: `Switch to the ${AGENT_MODE_LABELS[mode]} agent`,
-        run: (store: AppStore) => switchAgentMode(store, mode),
-      },
-    ]),
-  );
 
 const QUIT_COMMAND: SlashCommand = {
   description: "Exit the app (also /exit, /q, /leave)",
@@ -61,17 +31,6 @@ export const SLASH_ALIASES: Record<string, string> = {
 };
 
 export const SLASH_COMMANDS: Record<string, SlashCommand> = {
-  ...buildModeCommands(),
-  "/mode": {
-    description: "Show or switch the agent (ask|plan|build)",
-    run(store, argument) {
-      const parsed = agentModeSchema.safeParse(argument);
-      if (parsed.success) return switchAgentMode(store, parsed.data);
-      const current = AGENT_MODE_LABELS[store.state.agentMode];
-      const text = `Agent: ${current} (usage: /mode ${agentModeSchema.options.join("|")})`;
-      store.emit({ type: "ui.notice.posted", text });
-    },
-  },
   "/permission": {
     description: "Show or set the permission mode",
     run(store, argument) {

@@ -6,7 +6,6 @@ const WORKSPACE_KEYS = [
   "model",
   "effort",
   "permissionMode",
-  "agentMode",
   "cwd",
   "gitBranch",
   "gitStats",

@@ -111,7 +111,7 @@ test("startup asks for workspace info and an agent session", async () => {
   for (const expected of [
     "/work/app",
     "main",
-    "⛏ Build (shift+tab) ⋅ Claude Haiku 5.5 ⋅ ⣤ high ⋅ $0.000 ⋅ ⛉ Automatic",
+    "Claude Haiku 5.5 (shift+tab) ⋅ ⣤ high ⋅ $0.000 ⋅ ⛉ Automatic",
   ]) {
     expect(output).toContain(expected);
   }
@@ -119,7 +119,6 @@ test("startup asks for workspace info and an agent session", async () => {
   expect(output).toContain("Type your prompt");
   expect(client.lastOfType("agent.session.create.requested")).toMatchObject({
     options: { model: "claude-haiku-5-5", effort: "high", permissionMode: "auto" },
-    agentMode: "build",
   });
 });
 
@@ -132,12 +131,12 @@ test("the label shows the model and effort and follows /effort", async () => {
     cwd: "/work/app",
     permissionMode: "default",
   });
-  expect(await harness.frame()).toContain("⛏ Build (shift+tab) ⋅ Claude Sonnet 5.5 ⋅ ⣤ high");
+  expect(await harness.frame()).toContain("Claude Sonnet 5.5 (shift+tab) ⋅ ⣤ high");
   await submit(harness, "/effort max");
   expect(harness.client.lastOfType("agent.effort.set.requested")?.effort).toBe("max");
   harness.client.receive({ type: "agent.effort.changed", effort: "max" });
   const output = await harness.frame();
-  expect(output).toContain("⛏ Build (shift+tab) ⋅ Claude Sonnet 5.5 ⋅ ⣿ max");
+  expect(output).toContain("Claude Sonnet 5.5 (shift+tab) ⋅ ⣿ max");
 });
 
 test("submitting sends the prompt and shows it in the transcript", async () => {
@@ -473,22 +472,22 @@ test("slash popover filters commands and tab completes", async () => {
   const harness = await createHarness();
   await harness.mockInput.typeText("/");
   let output = await harness.frame();
-  for (const command of ["/ask", "/plan", "/model", "/theme-background"]) {
+  for (const command of ["/permission", "/model", "/theme-background"]) {
     expect(output).toContain(command);
   }
 
-  await harness.mockInput.typeText("pl");
+  await harness.mockInput.typeText("cl");
   output = await harness.frame();
-  expect(output).toContain("Switch to the Plan agent");
-  expect(output).not.toContain("/clear");
+  expect(output).toContain("Start a fresh session");
+  expect(output).not.toContain("/model");
 
   harness.mockInput.pressTab();
   output = await harness.frame();
-  expect(output).toContain("❯ /plan");
-  expect(output).not.toContain("Switch to the Plan agent");
+  expect(output).toContain("❯ /clear");
+  expect(output).not.toContain("Start a fresh session");
 
   harness.mockInput.pressEnter();
-  expect(harness.client.lastOfType("agent.mode.set.requested")?.mode).toBe("plan");
+  expect(harness.client.lastOfType("session.create.requested")).toBeDefined();
 });
 
 test("slash popover lists the commands reported by the agent sdk", async () => {
@@ -679,21 +678,6 @@ test("the theme picker previews the highlighted theme and saves only on enter", 
   expect(Theme.accent.brand).not.toBe(defaultBrand);
 });
 
-test("the agent mode shows in the label and follows /mode", async () => {
-  const harness = await createHarness();
-  await submit(harness, "/ask");
-  harness.mockInput.pressEnter();
-  expect(harness.client.lastOfType("agent.mode.set.requested")).toEqual({
-    type: "agent.mode.set.requested",
-    agentSessionId: "a1",
-    mode: "ask",
-  });
-  harness.client.receive({ type: "agent.mode.changed", mode: "ask" });
-  const output = await harness.frame();
-  expect(output).toContain("⛓ Ask (shift+tab) ⋅ ");
-  expect(output).toContain("Agent mode: Ask");
-});
-
 test("the header shows the full path below a top margin and a bottom border", async () => {
   const harness = await createHarness();
   const lines = (await harness.frame()).split("\n");
@@ -711,13 +695,13 @@ test("resuming a session restores it and resumes its agent session", async () =>
     events: [
       { type: "session.created", sessionId: "s9" },
       { type: "agent.session.created", agentSessionId: "a9" },
-      { type: "agent.mode.changed", mode: "plan" },
+      { type: "agent.model.changed", model: "claude-sonnet-5-5" },
       { type: "agent.prompt.requested", agentSessionId: "a9", content: "earlier question" },
     ].map((event, index) => ({ timestamp: 1_000 + index, event })),
   });
   expect(harness.client.lastOfType("agent.session.resume.requested")).toMatchObject({
     agentSessionId: "a9",
-    agentMode: "plan",
+    options: { model: "claude-sonnet-5-5" },
   });
   const output = await harness.frame();
   expect(output).toContain("earlier question");
@@ -751,25 +735,22 @@ test("the clear command resets the transcript", async () => {
   expect(output).not.toContain("remember this");
 });
 
-test("shift+tab cycles the agent mode ask, plan, build", async () => {
+test("shift+tab asks the agent to cycle the model", async () => {
   const harness = await createHarness();
   harness.mockInput.pressTab({ shift: true });
-  expect(harness.client.lastOfType("agent.mode.set.requested")?.mode).toBe("ask");
-  harness.client.receive({ type: "agent.mode.changed", mode: "ask" });
-  harness.mockInput.pressTab({ shift: true });
-  expect(harness.client.lastOfType("agent.mode.set.requested")?.mode).toBe("plan");
-  harness.client.receive({ type: "agent.mode.changed", mode: "plan" });
-  harness.mockInput.pressTab({ shift: true });
-  expect(harness.client.lastOfType("agent.mode.set.requested")?.mode).toBe("build");
-  expect(await harness.frame()).toContain("(shift+tab)");
+  expect(harness.client.lastOfType("agent.model.cycle.requested")).toEqual({
+    type: "agent.model.cycle.requested",
+    agentSessionId: "a1",
+  });
+  harness.client.receive({ type: "agent.model.changed", model: "claude-sonnet-5-5" });
+  expect(await harness.frame()).toContain("Claude Sonnet 5.5 (shift+tab)");
 });
 
-test("shift+tab does not switch agents while a turn is running", async () => {
+test("shift+tab cycles the model while a turn is running", async () => {
   const harness = await createHarness();
   await submit(harness, "work");
   harness.mockInput.pressTab({ shift: true });
-  expect(harness.client.lastOfType("agent.mode.set.requested")).toBeUndefined();
-  expect(await harness.frame()).toContain("cancel the current turn before switching mode");
+  expect(harness.client.lastOfType("agent.model.cycle.requested")).toBeDefined();
 });
 
 const MODELS = [

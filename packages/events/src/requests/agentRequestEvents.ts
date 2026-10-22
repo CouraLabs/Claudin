@@ -5,13 +5,11 @@ import type {
   Options,
 } from "@anthropic-ai/claude-agent-sdk";
 import { z } from "zod";
-import { agentModeSchema } from "../models/agentMode.ts";
 import { type PromptContent, sdkValue } from "../models/sdkValue.ts";
 
 const agentSessionId = z.string();
 const content = sdkValue<PromptContent>();
 const agentOptions = sdkValue<Options>().optional();
-const agentMode = agentModeSchema.optional();
 
 export const effortLevelSchema = z.enum(["low", "medium", "high", "xhigh", "max"]);
 
@@ -53,19 +51,17 @@ export const agentRequestSchemas = [
     agentSessionId,
     options: sdkValue<GetSessionMessagesOptions>().optional(),
   }),
-  z.object({ type: z.literal("agent.session.create.requested"), options: agentOptions, agentMode }),
+  z.object({ type: z.literal("agent.session.create.requested"), options: agentOptions }),
   z.object({
     type: z.literal("agent.session.resume.requested"),
     agentSessionId,
     options: agentOptions,
-    agentMode,
   }),
   z.object({
     type: z.literal("agent.session.fork.requested"),
     agentSessionId,
     forkOptions: sdkValue<ForkSessionOptions>().optional(),
     options: agentOptions,
-    agentMode,
   }),
   z.object({ type: z.literal("agent.prompt.requested"), agentSessionId, content }),
   z.object({ type: z.literal("agent.prompt.queue.requested"), agentSessionId, content }),
@@ -84,6 +80,7 @@ export const agentRequestSchemas = [
     answers: z.record(z.string(), z.string()),
   }),
   z.object({ type: z.literal("agent.model.set.requested"), agentSessionId, model: z.string() }),
+  z.object({ type: z.literal("agent.model.cycle.requested"), agentSessionId }),
   z.object({
     type: z.literal("agent.permission_mode.set.requested"),
     agentSessionId,
@@ -93,11 +90,6 @@ export const agentRequestSchemas = [
     type: z.literal("agent.effort.set.requested"),
     agentSessionId,
     effort: effortLevelSchema,
-  }),
-  z.object({
-    type: z.literal("agent.mode.set.requested"),
-    agentSessionId,
-    mode: agentModeSchema,
   }),
   z.object({ type: z.literal("agent.commands.requested"), agentSessionId }),
   z.object({ type: z.literal("agent.models.requested"), agentSessionId }),

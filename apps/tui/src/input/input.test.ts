@@ -20,8 +20,8 @@ function createStore() {
 }
 
 test("detects slash and file triggers", () => {
-  expect(detectAutocomplete("/pl", 3)).toEqual({ kind: "slash", query: "pl", start: 0 });
-  expect(detectAutocomplete("/plan now", 9)).toBeNull();
+  expect(detectAutocomplete("/mc", 3)).toEqual({ kind: "slash", query: "mc", start: 0 });
+  expect(detectAutocomplete("/mcp now", 8)).toBeNull();
   expect(detectAutocomplete("look at @src/ap", 15)).toEqual({
     kind: "file",
     query: "src/ap",
@@ -32,8 +32,8 @@ test("detects slash and file triggers", () => {
 });
 
 test("applies slash and file completions", () => {
-  const slash = detectAutocomplete("/pl", 3);
-  expect(slash && applyCompletion("/pl", 3, slash, "/plan")).toEqual({ text: "/plan ", cursor: 6 });
+  const slash = detectAutocomplete("/mc", 3);
+  expect(slash && applyCompletion("/mc", 3, slash, "/mcp")).toEqual({ text: "/mcp ", cursor: 5 });
   const file = detectAutocomplete("see @ap please", 7);
   expect(file && applyCompletion("see @ap please", 7, file, "src/app.ts")).toEqual({
     text: "see @src/app.ts please",
@@ -43,10 +43,6 @@ test("applies slash and file completions", () => {
 
 test("filters slash commands by prefix", () => {
   expect(listSlashCommands("", [])).toEqual([
-    "/ask",
-    "/plan",
-    "/build",
-    "/mode",
     "/permission",
     "/model",
     "/theme",
@@ -58,7 +54,7 @@ test("filters slash commands by prefix", () => {
     "/clear",
     "/quit",
   ]);
-  expect(listSlashCommands("m", [])).toEqual(["/mode", "/model", "/mcp"]);
+  expect(listSlashCommands("m", [])).toEqual(["/model", "/mcp"]);
   expect(listSlashCommands("zzz", [])).toEqual([]);
 });
 
@@ -121,7 +117,7 @@ test("submits prompts, slash commands and approvals", () => {
     agentSessionId: "a1",
     content: "instead",
   });
-  submitPrompt(store, "/plan");
+  submitPrompt(store, "/cd /tmp");
   expect(store.state.transcript.at(-1)).toMatchObject({
     text: expect.stringContaining("busy"),
   });
@@ -145,19 +141,6 @@ test("submits prompts, slash commands and approvals", () => {
   expect(sent.at(-1)).toEqual({ type: "agent.prompt.cancel.requested", agentSessionId: "a1" });
 
   respond({ type: "agent.prompt.cancelled", agentSessionId: "a1" });
-  submitPrompt(store, "/plan");
-  expect(sent.at(-1)).toEqual({
-    type: "agent.mode.set.requested",
-    agentSessionId: "a1",
-    mode: "plan",
-  });
-  submitPrompt(store, "/mode ask");
-  expect(sent.at(-1)).toMatchObject({ type: "agent.mode.set.requested", mode: "ask" });
-  respond({ type: "agent.mode.changed", mode: "ask" });
-  submitPrompt(store, "/ask");
-  expect(store.state.transcript.at(-1)).toMatchObject({ text: "Already in Ask mode" });
-  submitPrompt(store, "/build");
-  expect(sent.at(-1)).toMatchObject({ mode: "build" });
   submitPrompt(store, "/permission plan");
   expect(sent.at(-1)).toEqual({
     type: "agent.permission_mode.set.requested",

@@ -1,5 +1,4 @@
 import type { ModelInfo, SlashCommand } from "@anthropic-ai/claude-agent-sdk";
-import { type AgentMode, DEFAULT_AGENT_MODE } from "../models/agentMode.ts";
 import { DEFAULT_PERMISSION_MODE } from "../requests/agentRequestEvents.ts";
 import type { QuestionDraft } from "../models/askedQuestion.ts";
 import { type BackgroundColor, TRANSPARENT_BACKGROUND } from "../models/backgroundColor.ts";
@@ -30,7 +29,6 @@ export type SessionState = {
   sessionId: string;
   prompts: PromptContent[];
   agentSessionId?: string;
-  agentMode: AgentMode;
   status: AgentStatus;
   model: string;
   permissionMode: string;
@@ -60,7 +58,6 @@ export type SessionState = {
 export const createSessionState = (sessionId: string): SessionState => ({
   sessionId,
   prompts: [],
-  agentMode: DEFAULT_AGENT_MODE,
   status: "idle",
   model: "",
   permissionMode: DEFAULT_PERMISSION_MODE,

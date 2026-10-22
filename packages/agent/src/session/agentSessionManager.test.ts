@@ -1,6 +1,7 @@
-import type { SDKMessage, SDKUserMessage } from "@anthropic-ai/claude-agent-sdk";
+import type { ModelInfo, SDKMessage, SDKUserMessage } from "@anthropic-ai/claude-agent-sdk";
 import type { ResponseEvent } from "@claudin/events";
 import { expect, test } from "vitest";
+import { AGENT_PROFILE_OPTIONS } from "../profile/agentProfile.ts";
 import { AgentSessionManager } from "./agentSessionManager.ts";
 import { RESULT_MESSAGE, ScriptedRuntime, type ScriptedTurn } from "../runtime/scriptedRuntime.ts";
 
@@ -22,7 +23,7 @@ async function collect(turn: AsyncGenerator<ResponseEvent>) {
 function createFixture(turn?: ScriptedTurn) {
   const runtime = new ScriptedRuntime(turn);
   const manager = new AgentSessionManager(runtime);
-  const id = manager.createSession({ cwd: "/work" }, "build");
+  const id = manager.createSession({ cwd: "/work" });
   return { runtime, manager, id, session: manager.requireSession(id) };
 }
 
@@ -91,8 +92,8 @@ test("cancelling interrupts the query and rejects what is pending", async () => 
   expect(runtime.queries[0]?.calls).toContain("interrupt");
 });
 
-test("settings changes reach the query and are kept for a mode switch", async () => {
-  const { runtime, manager, id, session } = createFixture();
+test("settings changes reach the query", async () => {
+  const { runtime, session } = createFixture();
   await session.setModel("haiku");
   await session.setPermissionMode("plan");
   await session.setEffort("max");
@@ -101,24 +102,27 @@ test("settings changes reach the query and are kept for a mode switch", async ()
     "setPermissionMode:plan",
     'applyFlagSettings:{"effortLevel":"max"}',
   ]);
-  await collect(session.prompt("start"));
-  manager.switchMode(id, "plan");
-  const [before, after] = runtime.queries;
-  expect(before?.calls.at(-1)).toBe("close");
-  expect(after?.options).toMatchObject({
-    model: "haiku",
-    permissionMode: "plan",
-    effort: "max",
-    resume: id,
-  });
-  expect(after?.options).not.toHaveProperty("sessionId");
 });
 
-test("switching mode before any prompt keeps the session id instead of resuming", () => {
-  const { runtime, manager, id } = createFixture();
-  manager.switchMode(id, "ask");
-  expect(runtime.queries[1]?.options).toMatchObject({ sessionId: id });
-  expect(runtime.queries[1]?.options).not.toHaveProperty("resume");
+test("cycling the model moves through the supported models and wraps", async () => {
+  const runtime = new ScriptedRuntime();
+  runtime.models = ["haiku", "sonnet"].map((value) => ({ value })) as ModelInfo[];
+  const manager = new AgentSessionManager(runtime);
+  const session = manager.requireSession(manager.createSession({ model: "haiku" }));
+  expect(await session.cycleModel()).toBe("sonnet");
+  expect(await session.cycleModel()).toBe("haiku");
+  expect(runtime.queries[0]?.calls).toEqual(["setModel:sonnet", "setModel:haiku"]);
+});
+
+test("cycling without supported models changes nothing", async () => {
+  const { runtime, session } = createFixture();
+  expect(await session.cycleModel()).toBeUndefined();
+  expect(runtime.queries[0]?.calls).toEqual([]);
+});
+
+test("every session uses the shared profile tools and system prompt", () => {
+  const { runtime } = createFixture();
+  expect(runtime.queries[0]?.options).toMatchObject(AGENT_PROFILE_OPTIONS);
 });
 
 test("resuming falls back to a new session when the agent does not know the id", async () => {

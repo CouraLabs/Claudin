@@ -7,7 +7,6 @@ import type {
   SlashCommand,
 } from "@anthropic-ai/claude-agent-sdk";
 import { z } from "zod";
-import { agentModeSchema } from "../models/agentMode.ts";
 import {
   approvalDecisionSchema,
   effortLevelSchema,
@@ -57,7 +56,6 @@ export const agentResponseSchemas = [
   z.object({ type: z.literal("agent.model.changed"), model: z.string() }),
   z.object({ type: z.literal("agent.effort.changed"), effort: effortLevelSchema }),
   z.object({ type: z.literal("agent.permission_mode.changed"), mode: permissionModeSchema }),
-  z.object({ type: z.literal("agent.mode.changed"), mode: agentModeSchema }),
   z.object({
     type: z.literal("agent.commands.received"),
     commands: sdkValue<SlashCommand[]>(),

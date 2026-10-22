@@ -5,7 +5,7 @@ import type { AppStore } from "../store/appStore.ts";
 import { isAgentBusy } from "./agentBusy.ts";
 import { routeAutocompleteKey } from "./autocomplete.ts";
 import { adjustBackground, closeBackgroundEditor, saveBackground } from "./backgroundActions.ts";
-import { cycleAgentMode } from "./localCommands.ts";
+import { cycleModel } from "./localCommands.ts";
 import { confirmPicker } from "./pickerActions.ts";
 import { answerApproval, cancelTurn, type PromptDelivery } from "./promptActions.ts";
 import { confirmQuestion, dismissQuestion } from "./questionActions.ts";
@@ -142,9 +142,9 @@ const routePicker: KeyRoute = (key, { store }) => {
   return true;
 };
 
-const routeAgentMode: KeyRoute = (key, { store }) => {
+const routeModelCycle: KeyRoute = (key, { store }) => {
   if (key.name !== "tab" || !key.shift) return false;
-  cycleAgentMode(store);
+  cycleModel(store);
   return true;
 };
 
@@ -161,7 +161,7 @@ const ROUTES: KeyRoute[] = [
   routeQuestion,
   routeBackgroundEditor,
   routePicker,
-  routeAgentMode,
+  routeModelCycle,
   routeDelivery,
   routeCompletion,
   routeDoubleEscape,

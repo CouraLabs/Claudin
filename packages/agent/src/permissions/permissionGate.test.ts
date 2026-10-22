@@ -15,9 +15,9 @@ const QUESTIONS = [
   },
 ];
 
-function createGate(deniedTools: string[] = []) {
+function createGate() {
   const events: ResponseEvent[] = [];
-  const gate = new PermissionGate("a1", deniedTools);
+  const gate = new PermissionGate("a1");
   gate.listen((event) => events.push(event));
   const useTool = (
     name: string,
@@ -87,12 +87,6 @@ test("aborting denies a pending call and unknown answers are ignored", async () 
   controller.abort();
   expect(await result).toMatchObject({ behavior: "deny" });
   expect(events.at(-1)).toMatchObject({ type: "agent.tool.approval.resolved", decision: "reject" });
-});
-
-test("tools denied by the agent mode are refused without asking", async () => {
-  const { useTool, events } = createGate(["Write", "Edit"]);
-  expect(await useTool("Write", "t1", {})).toMatchObject({ behavior: "deny" });
-  expect(events).toEqual([]);
 });
 
 test("asking emits the questions and waits for answers", async () => {

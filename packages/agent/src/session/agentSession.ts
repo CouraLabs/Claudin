@@ -7,12 +7,13 @@ import type {
   SDKUserMessage,
   SlashCommand,
 } from "@anthropic-ai/claude-agent-sdk";
-import type { AgentMode, ApprovalDecision, PromptContent, ResponseEvent } from "@claudin/events";
+import type { ApprovalDecision, PromptContent, ResponseEvent } from "@claudin/events";
 import { type Pushable, pushable } from "it-pushable";
-import { AGENT_MODE_PROFILES, buildModeOptions } from "../modes/agentModeProfiles.ts";
+import { AGENT_PROFILE_OPTIONS } from "../profile/agentProfile.ts";
 import type { AgentQuery, AgentRuntime } from "../runtime/agentRuntime.ts";
 import { buildUserMessage, type PromptPriority } from "../runtime/buildUserMessage.ts";
 import { PermissionGate } from "../permissions/permissionGate.ts";
+import { pickNextModel } from "./pickNextModel.ts";
 
 type TurnEvent = ResponseEvent;
 
@@ -22,35 +23,22 @@ export class AgentSession {
   readonly query: AgentQuery;
   pendingTurns = 0;
   pumping = false;
-  started: boolean;
 
   constructor(
-    private agentSessionId: string,
+    agentSessionId: string,
     private baseOptions: Options,
-    readonly mode: AgentMode,
     runtime: AgentRuntime,
-    resumed = false,
   ) {
-    this.started = resumed;
-    this.gate = new PermissionGate(agentSessionId, AGENT_MODE_PROFILES[mode].deniedTools);
+    this.gate = new PermissionGate(agentSessionId);
     this.query = runtime.open({
       prompt: this.input,
       options: {
         includePartialMessages: true,
         ...baseOptions,
-        ...buildModeOptions(mode),
+        ...AGENT_PROFILE_OPTIONS,
         canUseTool: this.gate.canUseTool,
       },
     });
-  }
-
-  get hasStarted(): boolean {
-    return this.started;
-  }
-
-  buildSwitchOptions(): Options {
-    const { sessionId: _created, ...rest } = this.baseOptions;
-    return this.started ? { ...rest, resume: this.agentSessionId } : this.baseOptions;
   }
 
   prompt(content: PromptContent, priority?: PromptPriority): AsyncGenerator<TurnEvent> {
@@ -59,7 +47,6 @@ export class AgentSession {
   }
 
   send(content: PromptContent, priority?: PromptPriority): void {
-    this.started = true;
     this.pendingTurns += 1;
     this.input.push(buildUserMessage(content, priority));
   }
@@ -96,14 +83,18 @@ export class AgentSession {
     this.baseOptions = { ...this.baseOptions, model };
   }
 
-  async setPermissionMode(mode: PermissionMode): Promise<void> {
-    await this.query.setPermissionMode(mode);
-    this.baseOptions = { ...this.baseOptions, permissionMode: mode };
+  async cycleModel(): Promise<string | undefined> {
+    const next = pickNextModel(await this.fetchModels(), this.baseOptions.model);
+    if (next) await this.setModel(next);
+    return next;
   }
 
-  async setEffort(effort: EffortLevel): Promise<void> {
-    await this.query.applyFlagSettings({ effortLevel: effort });
-    this.baseOptions = { ...this.baseOptions, effort };
+  setPermissionMode(mode: PermissionMode): Promise<void> {
+    return this.query.setPermissionMode(mode);
+  }
+
+  setEffort(effort: EffortLevel): Promise<void> {
+    return this.query.applyFlagSettings({ effortLevel: effort });
   }
 
   fetchMcpStatus(): Promise<McpServerStatus[]> {

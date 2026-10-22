@@ -8,7 +8,6 @@ import { updateFileMatches } from "./reduceAutocomplete.ts";
 import { applyLoadedBackground, applySavedBackground } from "./reduceBackground.ts";
 import {
   describeServers,
-  reduceAgentModeChanged,
   reduceEffortChanged,
   reduceModeChanged,
   reduceModelChanged,
@@ -106,10 +105,7 @@ export function reduceSessionState(state: SessionState, event: AppEvent): Sessio
         ...state,
         effort: typeof event.options?.effort === "string" ? event.options.effort : state.effort,
         model: event.options?.model ?? state.model,
-        agentMode: event.agentMode ?? state.agentMode,
       };
-    case "agent.mode.changed":
-      return reduceAgentModeChanged(state, event.mode);
     case "agent.models.received":
       return openModelPicker(state, event.models);
     case "session.list.received":

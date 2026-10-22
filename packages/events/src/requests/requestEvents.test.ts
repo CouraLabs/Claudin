@@ -14,21 +14,15 @@ test("parses agent and session requests", () => {
   ).toMatchObject({ content: "hi" });
 });
 
-test("parses agent mode and session restore requests", () => {
+test("parses model cycle and session restore requests", () => {
   expect(
-    requestEventSchema.parse({
-      type: "agent.mode.set.requested",
-      agentSessionId: "a",
-      mode: "plan",
-    }),
-  ).toMatchObject({ mode: "plan" });
+    requestEventSchema.parse({ type: "agent.model.cycle.requested", agentSessionId: "a" }),
+  ).toEqual({ type: "agent.model.cycle.requested", agentSessionId: "a" });
   expect(requestEventSchema.parse({ type: "session.restore.requested", sessionId: "s" })).toEqual({
     type: "session.restore.requested",
     sessionId: "s",
   });
-  expect(() =>
-    requestEventSchema.parse({ type: "agent.mode.set.requested", agentSessionId: "a", mode: "x" }),
-  ).toThrow();
+  expect(() => requestEventSchema.parse({ type: "agent.model.cycle.requested" })).toThrow();
 });
 
 test("rejects unknown request types", () => {

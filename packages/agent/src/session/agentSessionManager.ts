@@ -4,7 +4,6 @@ import type {
   GetSessionMessagesOptions,
   Options,
 } from "@anthropic-ai/claude-agent-sdk";
-import { type AgentMode, DEFAULT_AGENT_MODE } from "@claudin/events";
 import { type AgentRuntime, sdkRuntime } from "../runtime/agentRuntime.ts";
 import { AgentSession } from "./agentSession.ts";
 
@@ -25,29 +24,19 @@ export class AgentSessionManager {
     return this.sessions.has(sessionId);
   }
 
-  createSession(options: Options = {}, mode: AgentMode = DEFAULT_AGENT_MODE): string {
+  createSession(options: Options = {}): string {
     const sessionId = options.sessionId ?? crypto.randomUUID();
     this.sessions.set(
       sessionId,
-      new AgentSession(sessionId, { ...options, sessionId }, mode, this.runtime),
+      new AgentSession(sessionId, { ...options, sessionId }, this.runtime),
     );
     return sessionId;
   }
 
-  async resumeSession(
-    sessionId: string,
-    options: Options = {},
-    mode: AgentMode = DEFAULT_AGENT_MODE,
-  ): Promise<string> {
+  async resumeSession(sessionId: string, options: Options = {}): Promise<string> {
     if (!(await this.runtime.getInfo(sessionId)))
-      return this.createSession({ ...options, sessionId }, mode);
-    const resumed = new AgentSession(
-      sessionId,
-      { ...options, resume: sessionId },
-      mode,
-      this.runtime,
-      true,
-    );
+      return this.createSession({ ...options, sessionId });
+    const resumed = new AgentSession(sessionId, { ...options, resume: sessionId }, this.runtime);
     this.sessions.set(sessionId, resumed);
     return sessionId;
   }
@@ -56,23 +45,9 @@ export class AgentSessionManager {
     sessionId: string,
     forkOptions?: ForkSessionOptions,
     options: Options = {},
-    mode: AgentMode = DEFAULT_AGENT_MODE,
   ): Promise<string> {
     const forked = await this.runtime.fork(sessionId, forkOptions);
-    return this.resumeSession(forked.sessionId, options, mode);
-  }
-
-  switchMode(sessionId: string, mode: AgentMode): void {
-    const previous = this.requireSession(sessionId);
-    const next = new AgentSession(
-      sessionId,
-      previous.buildSwitchOptions(),
-      mode,
-      this.runtime,
-      previous.hasStarted,
-    );
-    previous.close();
-    this.sessions.set(sessionId, next);
+    return this.resumeSession(forked.sessionId, options);
   }
 
   closeSession(sessionId: string): void {

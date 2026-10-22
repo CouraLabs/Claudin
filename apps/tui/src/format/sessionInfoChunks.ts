@@ -1,5 +1,4 @@
 import {
-  AGENT_MODE_LABELS,
   readCacheHitPercent,
   readModelLabel,
   readPermissionLabel,
@@ -8,30 +7,19 @@ import {
 import { dim, fg, type TextChunk } from "@opentui/core";
 import { Theme } from "../theme/colors.ts";
 import { formatCost, formatTokenCount } from "./formatMetrics.ts";
-import {
-  AGENT_MODE_GLYPHS,
-  EFFORT_GLYPHS,
-  PERMISSION_GLYPH,
-  SEPARATOR,
-  TOKEN_GLYPHS,
-} from "./glyphs.ts";
-import { readAgentModeColor, readEffortColor, readPermissionColor } from "./statusColors.ts";
+import { EFFORT_GLYPHS, PERMISSION_GLYPH, SEPARATOR, TOKEN_GLYPHS } from "./glyphs.ts";
+import { readEffortColor, readPermissionColor } from "./statusColors.ts";
 
 type Setting = { text: string; color: string; hint?: string };
 
-const MODE_HINT = " (shift+tab)";
+const MODEL_HINT = " (shift+tab)";
 
 const buildEffortText = (effort: string): string =>
   [EFFORT_GLYPHS[effort], effort].filter(Boolean).join(" ");
 
 const buildSettings = (state: SessionState): Setting[] =>
   [
-    {
-      text: `${AGENT_MODE_GLYPHS[state.agentMode]} ${AGENT_MODE_LABELS[state.agentMode]}`,
-      color: readAgentModeColor(state.agentMode),
-      hint: MODE_HINT,
-    },
-    { text: readModelLabel(state), color: Theme.fg.primary },
+    { text: readModelLabel(state), color: Theme.fg.primary, hint: MODEL_HINT },
     { text: buildEffortText(state.effort), color: readEffortColor(state.effort) },
     { text: formatCost(state.costUsd), color: Theme.status.warning },
     {
