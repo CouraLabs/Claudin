@@ -10,10 +10,8 @@ const showHistoryText = (store: AppStore, editor: InputEditor): void => {
 };
 
 export function routeHistoryKey(key: KeyEvent, store: AppStore, editor: InputEditor): boolean {
-  const { ui, prompts } = store.state;
-  if (ui.focus !== "input" || (key.name !== "up" && key.name !== "down")) return false;
-  const starting = key.name === "up" && editor.read() === "" && prompts.length > 0;
-  if (!ui.history && !starting) return false;
+  if (store.state.ui.focus !== "input" || !key.shift) return false;
+  if (key.name !== "up" && key.name !== "down") return false;
   const delta = key.name === "up" ? -1 : 1;
   store.emit({ type: "ui.history.moved", delta, draft: editor.read() });
   showHistoryText(store, editor);

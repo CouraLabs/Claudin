@@ -4,6 +4,7 @@ import {
   findAwaitingCalls,
   findGroupId,
   findQuestionCalls,
+  readHistoryText,
   type SessionState,
   THEME_NAMES,
   type ThemeName,
@@ -30,6 +31,8 @@ import {
 import { createKeyPresses, routeKey } from "./input/routeKeys.ts";
 import { reactToEvent } from "./input/sessionReactions.ts";
 import { TurnNotifier } from "./notify/turnNotifier.ts";
+import { buildHistoryPath, readHistoryFile } from "./prompt/historyFile.ts";
+import { HistorySaver } from "./prompt/historySaver.ts";
 import { AppStore } from "./store/appStore.ts";
 import { applyTheme, Theme } from "./theme/colors.ts";
 import { createSyntaxStyle } from "./theme/syntaxStyle.ts";
@@ -42,6 +45,7 @@ export type TuiOptions = {
   renderer?: CliRenderer;
   resumeSessionId?: string;
   attach?: boolean;
+  historyPath?: string;
   onExit?: (sessionId: string) => void;
 };
 
@@ -78,14 +82,27 @@ export async function startTui(
 
   const diffViewer = new DiffViewerPanel(activeRenderer, syntaxStyle);
   const submitInput = (delivery: PromptDelivery) => {
-    if (!submitPrompt(store, input.text, delivery)) return;
+    const draft = input.compose();
+    if (!submitPrompt(store, draft.text, delivery, draft.images)) return;
     input.clear();
     if (store.state.ui.history) store.emit({ type: "ui.history.reset" });
   };
 
+  const historyPath = options.historyPath ?? buildHistoryPath(process.cwd());
+  const historySaver = new HistorySaver(historyPath);
+  let destroyed = false;
+  const saveDraft = (text: string) => {
+    const { ui, promptHistory } = store.state;
+    if (ui.history && text === readHistoryText(store.state)) return;
+    historySaver.schedule(promptHistory, text);
+  };
+
   const input = new PromptInput(activeRenderer, {
     onSubmit: () => submitInput("send"),
-    onChange: (text, cursor) => syncAutocomplete(store, text, cursor),
+    onChange: (text, cursor) => {
+      syncAutocomplete(store, text, cursor);
+      saveDraft(text);
+    },
   });
 
   const root = new BoxRenderable(activeRenderer, {
@@ -196,10 +213,15 @@ export async function startTui(
   activeRenderer.on("destroy", () => {
     clearInterval(clock);
     clearInterval(rateLimitPoll);
+    destroyed = true;
+    void historySaver.flush();
     options.onExit?.(store.state.sessionId);
     store.close();
   });
 
+  void readHistoryFile(historyPath).then((entries) => {
+    if (!destroyed) store.emit({ type: "ui.history.loaded", entries });
+  });
   render(store.state);
   input.setFocused(true);
   if (options.attach) attachSession(store);

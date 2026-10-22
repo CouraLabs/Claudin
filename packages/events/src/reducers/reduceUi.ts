@@ -11,7 +11,7 @@ import {
 } from "./reduceBackground.ts";
 import { listCheckpoints } from "./reduceCheckpoint.ts";
 import { closeDiffViewer, moveDiffViewer } from "./reduceDiffViewer.ts";
-import { moveHistory, resetHistory, searchHistory } from "./reduceHistory.ts";
+import { loadHistory, moveHistory, resetHistory, searchHistory } from "./reduceHistory.ts";
 import {
   changeQuestionCustom,
   moveQuestionCursor,
@@ -96,6 +96,8 @@ export function reduceUi(state: SessionState, event: UiEvent): SessionState {
       return moveHistory(state, event.delta, event.draft);
     case "ui.history.searched":
       return searchHistory(state, event.draft);
+    case "ui.history.loaded":
+      return loadHistory(state, event.entries);
     case "ui.history.reset":
       return resetHistory(state);
     case "ui.diff.viewer.moved":

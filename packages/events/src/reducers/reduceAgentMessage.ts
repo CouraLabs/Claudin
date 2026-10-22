@@ -7,11 +7,13 @@ import { isPromptEcho, reduceCheckpoint } from "./reduceCheckpoint.ts";
 import { reduceRateLimitEvent } from "./reduceRateLimit.ts";
 import { reduceResult } from "./reduceResult.ts";
 import { reduceStreamEvent } from "./reduceStreamEvent.ts";
+import { reduceTaskProgress } from "./reduceTaskProgress.ts";
 import { reduceToolResults } from "./reduceToolResults.ts";
 
 export function reduceAgentMessage(state: SessionState, message: SDKMessage): SessionState {
   switch (message.type) {
     case "system":
+      if (message.subtype === "task_progress") return reduceTaskProgress(state, message);
       if (message.subtype !== "init") return reduceNoticeMessage(state, message);
       return {
         ...state,

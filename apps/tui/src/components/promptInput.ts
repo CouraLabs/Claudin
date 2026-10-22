@@ -2,13 +2,18 @@ import {
   BoxRenderable,
   type CliRenderer,
   type KeyBinding,
+  type PasteEvent,
+  SyntaxStyle,
   TextareaRenderable,
   TextRenderable,
 } from "@opentui/core";
+import { PasteAttachments, type PromptDraft } from "../prompt/pasteAttachments.ts";
+import { planPaste } from "../prompt/planPaste.ts";
 import { Theme } from "../theme/colors.ts";
 
 const MAX_INPUT_LINES = 8;
 const BUSY_TITLE = " Ctrl+Q (queue) Ctrl+W (steer) ";
+const ATTACHMENT_STYLE = "attachment";
 const PLACEHOLDER = "Type your prompt, /slash command, or @file reference...";
 
 const KEY_BINDINGS: KeyBinding[] = [
@@ -28,6 +33,9 @@ export class PromptInput {
   readonly renderable: BoxRenderable;
   readonly textarea: TextareaRenderable;
   readonly chevron: TextRenderable;
+  readonly attachments = new PasteAttachments();
+  private readonly attachmentStyle: SyntaxStyle;
+  private attachmentStyleId = 0;
   focused = false;
 
   constructor(renderer: CliRenderer, handlers: PromptInputHandlers) {
@@ -40,14 +48,18 @@ export class PromptInput {
       flexShrink: 0,
       paddingLeft: 1,
     });
+    this.attachmentStyle = SyntaxStyle.create(renderer.nativeScene);
     this.textarea = new TextareaRenderable(renderer, {
       flexGrow: 1,
       height: 1,
       placeholder: PLACEHOLDER,
       wrapMode: "word",
       keyBindings: KEY_BINDINGS,
+      syntaxStyle: this.attachmentStyle,
+      onPaste: (event) => this.insertPlaceholder(event),
       onSubmit: () => handlers.onSubmit(this.text),
       onContentChange: () => {
+        this.markAttachments();
         this.fitHeight();
         handlers.onChange(this.text, this.textarea.cursorOffset);
       },
@@ -71,8 +83,20 @@ export class PromptInput {
     this.textarea.cursorOffset = cursor;
   }
 
+  compose(): PromptDraft {
+    return this.attachments.compose(this.text);
+  }
+
+  insertPlaceholder(event: PasteEvent): void {
+    const placeholder = planPaste(event, this.attachments);
+    if (placeholder === undefined) return;
+    event.preventDefault();
+    this.textarea.insertText(placeholder);
+  }
+
   clear(): void {
     this.textarea.setText("");
+    this.attachments.reset();
   }
 
   setFocused(focused: boolean): void {
@@ -99,6 +123,27 @@ export class PromptInput {
     this.textarea.focusedTextColor = Theme.fg.primary;
     this.textarea.backgroundColor = Theme.bg.default;
     this.textarea.focusedBackgroundColor = Theme.bg.default;
+    this.attachmentStyleId = this.attachmentStyle.registerStyle(ATTACHMENT_STYLE, {
+      fg: Theme.accent.highlight,
+      bold: true,
+    });
+    this.markAttachments();
+  }
+
+  private markAttachments(): void {
+    const { extmarks } = this.textarea;
+    extmarks.clear();
+    const text = this.text;
+    for (const placeholder of this.attachments.placeholders()) {
+      for (let at = text.indexOf(placeholder); at >= 0; at = text.indexOf(placeholder, at + 1)) {
+        extmarks.create({
+          start: at,
+          end: at + placeholder.length,
+          virtual: true,
+          styleId: this.attachmentStyleId,
+        });
+      }
+    }
   }
 
   fitHeight(): void {

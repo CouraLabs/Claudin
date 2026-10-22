@@ -11,9 +11,7 @@ export const readEffortColor = (effort: string): string =>
 
 export const readPermissionColor = (mode: string): string =>
   ({
-    default: Theme.fg.primary,
     acceptEdits: Theme.status.success,
-    plan: Theme.status.info,
     auto: Theme.accent.highlight,
     dontAsk: Theme.status.warning,
     bypassPermissions: Theme.status.danger,

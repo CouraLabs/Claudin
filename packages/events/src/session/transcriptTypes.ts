@@ -23,6 +23,7 @@ export type ToolCall = {
   endedAt?: number;
   output?: string;
   error?: string;
+  progress?: string;
 };
 
 export type TranscriptEntry =

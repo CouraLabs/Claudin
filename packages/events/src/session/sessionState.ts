@@ -37,6 +37,7 @@ export type UiState = {
 export type SessionState = {
   sessionId: string;
   prompts: PromptContent[];
+  promptHistory: string[];
   agentSessionId?: string;
   status: AgentStatus;
   model: string;
@@ -67,6 +68,7 @@ export type SessionState = {
 export const createSessionState = (sessionId: string): SessionState => ({
   sessionId,
   prompts: [],
+  promptHistory: [],
   status: "idle",
   model: "",
   permissionMode: DEFAULT_PERMISSION_MODE,

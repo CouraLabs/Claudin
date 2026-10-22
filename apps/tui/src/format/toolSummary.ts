@@ -10,7 +10,8 @@ const SEARCH_TOOLS = new Set(["Glob", "Grep"]);
 const summarizeSearch = ({ pattern, path }: Record<string, unknown>): string =>
   typeof path === "string" ? `${pattern} in ${path}` : String(pattern);
 
-export function summarizeToolCall({ name, input }: ToolCall): string {
+export function summarizeToolCall({ name, input, status, progress }: ToolCall): string {
+  if (status === "running" && progress) return truncateText(progress, SUMMARY_LENGTH);
   if (SEARCH_TOOLS.has(name) && typeof input.pattern === "string") {
     return truncateText(summarizeSearch(input), SUMMARY_LENGTH);
   }

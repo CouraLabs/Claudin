@@ -6,7 +6,7 @@ import { reduceSessionState } from "./reduceSessionState.ts";
 
 const withPrompts = (...prompts: string[]): SessionState => ({
   ...createSessionState("s"),
-  prompts,
+  promptHistory: prompts,
 });
 
 const apply = (state: SessionState, ...events: UiEvent[]) =>
@@ -31,4 +31,14 @@ test("searching history finds older matches and notices when none remain", () =>
   expect(readHistoryText(second)).toBe("fix login");
   const none = apply(second, { type: "ui.history.searched", draft: "fix login" });
   expect(none.transcript.at(-1)).toMatchObject({ text: "No earlier prompt matches" });
+});
+
+test("loading keeps the newest ten and puts earlier entries before in-session prompts", () => {
+  const loaded = apply(withPrompts("now"), {
+    type: "ui.history.loaded",
+    entries: Array.from({ length: 10 }, (_, at) => `old${at}`),
+  });
+  expect(loaded.promptHistory).toHaveLength(10);
+  expect(loaded.promptHistory.at(-1)).toBe("now");
+  expect(loaded.promptHistory[0]).toBe("old1");
 });

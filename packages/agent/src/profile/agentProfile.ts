@@ -1,4 +1,5 @@
 import type { Options } from "@anthropic-ai/claude-agent-sdk";
+import { DEFAULT_PERMISSION_MODE } from "@claudin/events";
 import { ADHD_SYSTEM_PROMPT } from "./adhdSystemPrompt.ts";
 
 export const AGENT_TOOLS = [
@@ -19,14 +20,38 @@ export const AGENT_TOOLS = [
   "AskUserQuestion",
   "Write",
   "Edit",
+  "NotebookEdit",
 ];
 
 export const AGENT_PROFILE_OPTIONS: Pick<
   Options,
-  "tools" | "systemPrompt" | "enableFileCheckpointing" | "extraArgs"
+  | "tools"
+  | "systemPrompt"
+  | "enableFileCheckpointing"
+  | "extraArgs"
+  | "permissionMode"
+  | "allowDangerouslySkipPermissions"
+  | "settings"
+  | "settingSources"
+  | "skills"
+  | "agentProgressSummaries"
+  | "includePartialMessages"
+  | "includeHookEvents"
 > = {
   tools: AGENT_TOOLS,
   systemPrompt: ADHD_SYSTEM_PROMPT,
   enableFileCheckpointing: true,
   extraArgs: { "replay-user-messages": null },
+  permissionMode: DEFAULT_PERMISSION_MODE,
+  allowDangerouslySkipPermissions: true,
+  settings: {
+    promptCacheTtl: "1h",
+    subagentPromptCacheTtl: "1h",
+    attribution: { commit: "", pr: "" },
+  },
+  settingSources: ["user", "project", "local"],
+  skills: "all",
+  agentProgressSummaries: true,
+  includePartialMessages: true,
+  includeHookEvents: true,
 };

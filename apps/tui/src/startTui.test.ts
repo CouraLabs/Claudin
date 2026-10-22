@@ -1,3 +1,6 @@
+import { mkdtemp } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import type { DaemonEvent, DaemonEventListener, EventClient } from "@claudin/daemon/client";
 import type { RequestEvent } from "@claudin/events";
 import { rgbToHex } from "@opentui/core";
@@ -51,7 +54,8 @@ async function createHarness(width = 100, height = 32, options: TuiOptions = {})
     exitOnCtrlC: false,
     kittyKeyboard: true,
   });
-  await startTui(client, { renderer: setup.renderer, ...options });
+  const historyPath = join(await mkdtemp(join(tmpdir(), "claudin-history-")), "history.jsonl");
+  await startTui(client, { renderer: setup.renderer, historyPath, ...options });
   client.receive({
     type: "workspace.info.received",
     cwd: "/work/app",
@@ -65,7 +69,7 @@ async function createHarness(width = 100, height = 32, options: TuiOptions = {})
     await setup.renderOnce();
     return setup.captureCharFrame();
   };
-  const harness = { client, ...setup, frame };
+  const harness = { client, historyPath, ...setup, frame };
   active = harness;
   return harness;
 }
@@ -112,14 +116,14 @@ test("startup asks for workspace info and an agent session", async () => {
   for (const expected of [
     "/work/app",
     "main",
-    "Claude Haiku 5.5 (shift+tab) ⋅ ⣤ high ⋅ $0.000 ⋅ ⛉ Automatic",
+    "Claude Haiku 5.5 (shift+tab) ⋅ ⣤ high ⋅ $0.000 ⋅ ⛉ Bypass",
   ]) {
     expect(output).toContain(expected);
   }
   expect(output).not.toContain("Idle");
   expect(output).toContain("Type your prompt");
   expect(client.lastOfType("agent.session.create.requested")).toMatchObject({
-    options: { model: "claude-haiku-5-5", effort: "high", permissionMode: "auto" },
+    options: { model: "claude-haiku-5-5", effort: "high", permissionMode: "bypassPermissions" },
   });
 });
 
@@ -633,8 +637,8 @@ test("the status line shows the 5h and 7d rate limits with the time to reset", a
 test("the status line below the editor shows settings and token usage", async () => {
   const harness = await createHarness(130);
   const lines = (await harness.frame()).split("\n");
-  const status = lines.find((line) => line.includes("⛉ Automatic")) ?? "";
-  expect(status).toContain("⛉ Automatic");
+  const status = lines.find((line) => line.includes("⛉ Bypass")) ?? "";
+  expect(status).toContain("⛉ Bypass");
   expect(status).toContain("↑0 ↓0 ⇑0 ⇓0 ↯0%");
   harness.client.receive({ type: "agent.permission_mode.changed", mode: "acceptEdits" });
   harness.client.receiveMessage({
@@ -989,20 +993,20 @@ const finishTurn = (harness: Harness) =>
 const inputLine = async (harness: Harness) =>
   (await harness.frame()).split("\n").findLast((line) => line.includes("❯ ")) ?? "";
 
-test("up and down recall earlier prompts and ctrl+r searches them", async () => {
+test("shift+up and shift+down recall earlier prompts and ctrl+r searches them", async () => {
   const harness = await createHarness();
   await submit(harness, "first idea");
   finishTurn(harness);
   await submit(harness, "second idea");
   finishTurn(harness);
-  harness.mockInput.pressArrow("up");
-  expect(await inputLine(harness)).toContain("second idea");
-  harness.mockInput.pressArrow("up");
-  expect(await inputLine(harness)).toContain("first idea");
-  harness.mockInput.pressArrow("down");
-  harness.mockInput.pressArrow("down");
-  expect(await inputLine(harness)).not.toContain("idea");
   await harness.mockInput.typeText("fir");
+  harness.mockInput.pressArrow("up", { shift: true });
+  expect(await inputLine(harness)).toContain("second idea");
+  harness.mockInput.pressArrow("up", { shift: true });
+  expect(await inputLine(harness)).toContain("first idea");
+  harness.mockInput.pressArrow("down", { shift: true });
+  harness.mockInput.pressArrow("down", { shift: true });
+  expect(await inputLine(harness)).not.toContain("idea");
   harness.mockInput.pressKey("r", { ctrl: true });
   expect(await inputLine(harness)).toContain("first idea");
 });
@@ -1141,4 +1145,43 @@ test("events from peers update the view without triggering local reactions", asy
   );
   expect(harness.client.sent.length).toBe(before);
   expect(await harness.frame()).toContain("from a peer");
+});
+
+test("pasting a big chunk of text shows a placeholder and sends the full text", async () => {
+  const harness = await createHarness();
+  const big = Array.from({ length: 8 }, (_, index) => `line ${index}`).join("\n");
+  await harness.mockInput.pasteBracketedText(big);
+  expect(await harness.frame()).toContain("[Pasted text #1 +8 lines]");
+  await harness.mockInput.typeText(" please");
+  harness.mockInput.pressEnter();
+  expect(harness.client.lastOfType("agent.prompt.requested")?.content).toBe(`${big} please`);
+});
+
+test("pasting an image file path attaches the image as a block", async () => {
+  const path = `${tmpdir()}/claudin-paste-test.png`;
+  await Bun.write(path, new Uint8Array([137, 80, 78, 71]));
+  const harness = await createHarness();
+  await harness.mockInput.pasteBracketedText(path);
+  expect(await harness.frame()).toContain("[Image #1]");
+  harness.mockInput.pressEnter();
+  expect(harness.client.lastOfType("agent.prompt.requested")?.content).toMatchObject([
+    { type: "text", text: "[Image #1]" },
+    { type: "image", source: { type: "base64", media_type: "image/png" } },
+  ]);
+});
+
+test("short pastes are inserted as typed", async () => {
+  const harness = await createHarness();
+  await harness.mockInput.pasteBracketedText("small");
+  harness.mockInput.pressEnter();
+  expect(harness.client.lastOfType("agent.prompt.requested")?.content).toBe("small");
+});
+
+test("the typed prompt is saved to the history file after the debounce", async () => {
+  const harness = await createHarness();
+  await submit(harness, "sent one");
+  await harness.mockInput.typeText("still typing");
+  await new Promise((resolve) => setTimeout(resolve, 700));
+  const lines = (await Bun.file(harness.historyPath).text()).trim().split("\n");
+  expect(lines.map((line) => JSON.parse(line).text)).toEqual(["sent one", "still typing"]);
 });

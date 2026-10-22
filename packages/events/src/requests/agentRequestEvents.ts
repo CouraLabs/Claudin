@@ -13,24 +13,15 @@ const agentOptions = sdkValue<Options>().optional();
 
 export const effortLevelSchema = z.enum(["low", "medium", "high", "xhigh", "max"]);
 
-export const permissionModeSchema = z.enum([
-  "default",
-  "acceptEdits",
-  "bypassPermissions",
-  "plan",
-  "dontAsk",
-  "auto",
-]);
+export const permissionModeSchema = z.enum(["auto", "acceptEdits", "bypassPermissions", "dontAsk"]);
 
 export type PermissionMode = z.infer<typeof permissionModeSchema>;
 
-export const DEFAULT_PERMISSION_MODE: PermissionMode = "auto";
+export const DEFAULT_PERMISSION_MODE: PermissionMode = "bypassPermissions";
 
 export const PERMISSION_MODE_LABELS: Record<PermissionMode, string> = {
-  default: "Default Permission",
   acceptEdits: "Accept Edits Permission",
   bypassPermissions: "Bypass Permissions",
-  plan: "Plan Permission",
   dontAsk: "Don't Ask Permission",
   auto: "Automatic Permissions",
 };

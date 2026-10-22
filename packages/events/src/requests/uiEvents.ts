@@ -35,6 +35,7 @@ export type UiEvent =
   | { type: "ui.rewind.picker.opened" }
   | { type: "ui.history.moved"; delta: 1 | -1; draft: string }
   | { type: "ui.history.searched"; draft: string }
+  | { type: "ui.history.loaded"; entries: string[] }
   | { type: "ui.history.reset" }
   | { type: "ui.diff.viewer.moved"; delta: 1 | -1 }
   | { type: "ui.diff.viewer.closed" }

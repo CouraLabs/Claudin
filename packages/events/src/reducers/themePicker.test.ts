@@ -1,9 +1,9 @@
 import { expect, test } from "vitest";
+import { THEME_NAMES } from "../models/themeNames.ts";
 import { readPermissionLabel } from "../requests/agentRequestEvents.ts";
 import type { AppEvent } from "../session/appEvent.ts";
-import { reduceSessionState } from "./reduceSessionState.ts";
 import { createSessionState } from "../session/sessionState.ts";
-import { THEME_NAMES } from "../models/themeNames.ts";
+import { reduceSessionState } from "./reduceSessionState.ts";
 
 const play = (events: AppEvent[]) => events.reduce(reduceSessionState, createSessionState("s"));
 
@@ -31,7 +31,6 @@ test("selecting a theme stores it and posts a notice", () => {
 });
 
 test("reads readable permission labels and passes unknown modes through", () => {
-  expect(readPermissionLabel("default")).toBe("Default Permission");
   expect(readPermissionLabel("acceptEdits")).toBe("Accept Edits Permission");
   expect(readPermissionLabel("auto")).toBe("Automatic Permissions");
   expect(readPermissionLabel("custom")).toBe("custom");

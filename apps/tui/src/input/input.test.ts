@@ -146,11 +146,11 @@ test("submits prompts, slash commands and approvals", () => {
   expect(sent.at(-1)).toEqual({ type: "agent.prompt.cancel.requested", agentSessionId: "a1" });
 
   respond({ type: "agent.prompt.cancelled", agentSessionId: "a1" });
-  submitPrompt(store, "/permission plan");
+  submitPrompt(store, "/permission dontAsk");
   expect(sent.at(-1)).toEqual({
     type: "agent.permission_mode.set.requested",
     agentSessionId: "a1",
-    mode: "plan",
+    mode: "dontAsk",
   });
   submitPrompt(store, "/model sonnet");
   expect(sent.at(-1)).toMatchObject({ type: "agent.model.set.requested", model: "sonnet" });

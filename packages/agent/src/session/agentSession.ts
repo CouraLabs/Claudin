@@ -39,7 +39,6 @@ export class AgentSession {
     this.query = runtime.open({
       prompt: this.input,
       options: {
-        includePartialMessages: true,
         ...baseOptions,
         ...AGENT_PROFILE_OPTIONS,
         canUseTool: this.gate.canUseTool,

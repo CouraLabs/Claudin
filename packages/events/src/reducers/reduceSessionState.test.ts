@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 import type { AppEvent } from "../session/appEvent.ts";
-import { reduceSessionState, reduceTimedEvent } from "./reduceSessionState.ts";
 import { createSessionState } from "../session/sessionState.ts";
+import { reduceSessionState, reduceTimedEvent } from "./reduceSessionState.ts";
 import { findAwaitingCalls, listToolCalls } from "./toolGroups.ts";
 
 const play = (events: unknown[]) =>
@@ -396,8 +396,8 @@ test("effort comes from session creation, init and changes", () => {
   expect(reported.effort).toBe("low");
 });
 
-test("a new session defaults to auto permission mode", () => {
-  expect(play([]).permissionMode).toBe("auto");
+test("a new session defaults to bypass permission mode", () => {
+  expect(play([]).permissionMode).toBe("bypassPermissions");
 });
 
 test("receiving models opens the model picker on the current model", () => {
@@ -472,4 +472,19 @@ test("restoring keeps the original event times and tool durations", () => {
   expect(listToolCalls(restored)[0]).toMatchObject({ startedAt: 2_000, endedAt: 5_000 });
   expect(restored.transcript.at(-1)).toMatchObject({ text: "Session restored", at: 90_000 });
   expect(restored.now).toBe(90_000);
+});
+
+test("task progress puts the subagent summary on its running tool call", () => {
+  const state = play([
+    prompt,
+    assistant("m1", [toolUse("t1", "Agent", { description: "Audit auth" })]),
+    sdk({
+      type: "system",
+      subtype: "task_progress",
+      tool_use_id: "t1",
+      summary: "Analyzing authentication module",
+    }),
+    sdk({ type: "system", subtype: "task_progress", tool_use_id: "t1" }),
+  ]);
+  expect(listToolCalls(state)[0]?.progress).toBe("Analyzing authentication module");
 });

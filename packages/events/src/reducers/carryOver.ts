@@ -1,6 +1,13 @@
 import { createSessionState, type SessionState } from "../session/sessionState.ts";
 
-const DEVICE_KEYS = ["theme", "background", "slashCommands", "models", "rateLimits"] as const;
+const DEVICE_KEYS = [
+  "theme",
+  "background",
+  "slashCommands",
+  "models",
+  "rateLimits",
+  "promptHistory",
+] as const;
 
 const WORKSPACE_KEYS = [
   "model",

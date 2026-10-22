@@ -8,8 +8,11 @@ import {
   TextRenderable,
 } from "@opentui/core";
 import { formatClock } from "../format/formatMetrics.ts";
+import { clipLines } from "../format/truncateText.ts";
 import { Theme } from "../theme/colors.ts";
 import type { EntryView } from "./viewTypes.ts";
+
+const USER_LINES = 10;
 
 type UserEntry = Extract<TranscriptEntry, { kind: "user" }>;
 
@@ -42,7 +45,7 @@ export class UserMessageView implements EntryView<UserEntry> {
     this.entry = entry;
     this.text.content = new StyledText([
       bold(fg(Theme.accent.brand)("❯ ")),
-      bold(fg(Theme.fg.primary)(entry.text)),
+      bold(fg(Theme.fg.primary)(clipLines(entry.text, USER_LINES))),
     ]);
     this.clock.content = new StyledText([fg(Theme.fg.muted)(formatClock(entry.at))]);
   }

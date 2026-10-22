@@ -1,10 +1,19 @@
-import { readPromptText } from "../models/messageText.ts";
 import type { SessionState } from "../session/sessionState.ts";
 import { appendNotice } from "./appendEntry.ts";
 
 const NO_MATCH_NOTICE = "No earlier prompt matches";
 
-export const listPromptTexts = (state: SessionState): string[] => state.prompts.map(readPromptText);
+export const MAX_PROMPT_HISTORY = 10;
+
+export const queuePromptHistory = (entries: string[], text: string): string[] =>
+  text === "" || entries.at(-1) === text ? entries : [...entries, text].slice(-MAX_PROMPT_HISTORY);
+
+export const listPromptTexts = (state: SessionState): string[] => state.promptHistory;
+
+export const loadHistory = (state: SessionState, entries: string[]): SessionState => ({
+  ...state,
+  promptHistory: [...entries, ...state.promptHistory].slice(-MAX_PROMPT_HISTORY),
+});
 
 export function readHistoryText(state: SessionState): string | undefined {
   const { history } = state.ui;
@@ -13,7 +22,7 @@ export function readHistoryText(state: SessionState): string | undefined {
 }
 
 function browsingPosition(state: SessionState, draft: string) {
-  const size = state.prompts.length;
+  const size = state.promptHistory.length;
   const { history } = state.ui;
   const browsing = history !== null && history.index < size;
   return { size, index: browsing ? history.index : size, draft: browsing ? history.draft : draft };

@@ -3,13 +3,19 @@ export * from "./models/askedQuestion.ts";
 export * from "./models/backgroundColor.ts";
 export * from "./models/fileDiff.ts";
 export * from "./models/formatModelName.ts";
+export * from "./models/messageText.ts";
 export * from "./models/modelLabel.ts";
 export * from "./models/questionDraft.ts";
 export * from "./models/readTokens.ts";
 export * from "./models/sdkValue.ts";
 export * from "./models/themeNames.ts";
 export { listCheckpoints } from "./reducers/reduceCheckpoint.ts";
-export { listPromptTexts, readHistoryText } from "./reducers/reduceHistory.ts";
+export {
+  listPromptTexts,
+  MAX_PROMPT_HISTORY,
+  queuePromptHistory,
+  readHistoryText,
+} from "./reducers/reduceHistory.ts";
 export type { RawRateLimits } from "./reducers/reduceRateLimit.ts";
 export * from "./reducers/reduceSessionState.ts";
 export * from "./reducers/toolGroups.ts";
