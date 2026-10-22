@@ -1,0 +1,22 @@
+{
+  "name": "@claudin/cli",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "dev": "bun --watch src/index.ts",
+    "build": "bun build ./src/index.ts --outdir dist --target bun --packages external",
+    "lint": "biome lint .",
+    "format": "biome check --write .",
+    "typecheck": "bun check",
+    "test": "bunx --bun vitest run --config ../../vitest.config.ts --root ."
+  },
+  "dependencies": {
+    "@claudin/daemon": "workspace:*",
+    "@claudin/tui": "workspace:*",
+    "commander": "^15.0.0"
+  }
+}

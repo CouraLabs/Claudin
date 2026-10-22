@@ -1,0 +1,101 @@
+{
+  "$schema": "https://opencode.ai/theme.json",
+  "defs": {
+    "darkBg": "#0B0E14",
+    "darkBgAlt": "#0D1017",
+    "darkLine": "#11151C",
+    "darkPanel": "#0F131A",
+    "darkFg": "#BFBDB6",
+    "darkFgMuted": "#565B66",
+    "darkGutter": "#6C7380",
+    "darkTag": "#39BAE6",
+    "darkFunc": "#FFB454",
+    "darkEntity": "#59C2FF",
+    "darkString": "#AAD94C",
+    "darkRegexp": "#95E6CB",
+    "darkMarkup": "#F07178",
+    "darkKeyword": "#FF8F40",
+    "darkSpecial": "#E6B673",
+    "darkComment": "#ACB6BF",
+    "darkConstant": "#D2A6FF",
+    "darkOperator": "#F29668",
+    "darkAdded": "#7FD962",
+    "darkRemoved": "#F26D78",
+    "darkAccent": "#E6B450",
+    "darkError": "#D95757",
+    "darkIndentActive": "#6C7380"
+  },
+  "theme": {
+    "primary": "darkEntity",
+    "secondary": "darkConstant",
+    "accent": {
+      "dark": "#e69650",
+      "light": "#e6b450"
+    },
+    "error": {
+      "dark": "#db5f5f",
+      "light": "#d95757"
+    },
+    "warning": "darkSpecial",
+    "success": "darkAdded",
+    "info": {
+      "dark": "#34b8e5",
+      "light": "#39bae6"
+    },
+    "text": "darkFg",
+    "textMuted": {
+      "dark": "#888d9a",
+      "light": "#565b66"
+    },
+    "background": "darkBg",
+    "backgroundPanel": {
+      "dark": "#131820",
+      "light": "#0f131a"
+    },
+    "backgroundElement": {
+      "dark": "#1a202e",
+      "light": "#0d1017"
+    },
+    "border": "darkGutter",
+    "borderActive": "darkIndentActive",
+    "borderSubtle": {
+      "dark": "#222a39",
+      "light": "#11151c"
+    },
+    "diffAdded": "darkAdded",
+    "diffRemoved": "darkRemoved",
+    "diffContext": "darkComment",
+    "diffHunkHeader": "darkComment",
+    "diffHighlightAdded": "darkString",
+    "diffHighlightRemoved": "darkMarkup",
+    "diffAddedBg": "#20303b",
+    "diffRemovedBg": "#37222c",
+    "diffContextBg": "darkPanel",
+    "diffLineNumber": "diffContext",
+    "diffAddedLineNumberBg": "#1b2b34",
+    "diffRemovedLineNumberBg": "#2d1f26",
+    "markdownText": "darkFg",
+    "markdownHeading": "darkConstant",
+    "markdownLink": "darkEntity",
+    "markdownLinkText": "darkTag",
+    "markdownCode": "darkString",
+    "markdownBlockQuote": "darkSpecial",
+    "markdownEmph": "darkSpecial",
+    "markdownStrong": "darkFunc",
+    "markdownHorizontalRule": "darkFgMuted",
+    "markdownListItem": "darkEntity",
+    "markdownListEnumeration": "darkTag",
+    "markdownImage": "darkEntity",
+    "markdownImageText": "darkTag",
+    "markdownCodeBlock": "darkFg",
+    "syntaxComment": "darkComment",
+    "syntaxKeyword": "darkKeyword",
+    "syntaxFunction": "darkFunc",
+    "syntaxVariable": "darkEntity",
+    "syntaxString": "darkString",
+    "syntaxNumber": "darkConstant",
+    "syntaxType": "darkSpecial",
+    "syntaxOperator": "darkOperator",
+    "syntaxPunctuation": "darkFg"
+  }
+}
