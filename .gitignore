@@ -12,25 +12,29 @@ coverage
 
 # logs
 logs
-_.log
-report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
+*.log
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 # dotenv environment variable files
 .env
-.env.development.local
-.env.test.local
-.env.production.local
-.env.local
+.env.*
+!.env.example
 
 # caches
 .eslintcache
 .cache
+.turbo
 *.tsbuildinfo
 
-# IntelliJ based IDEs
+# IDEs
 .idea
+.vscode
 
-# Finder (MacOS) folder config
+# OS files
 .DS_Store
-.turbo
+
+# Claude Code local settings
+.claude/settings.local.json
+
+# app runtime data
 .claudin
