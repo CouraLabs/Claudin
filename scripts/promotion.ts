@@ -1,4 +1,5 @@
 import { buildApp } from "./build";
+import { createGithubRelease } from "./lib/createGithubRelease";
 import { nextVersion, parseBump } from "./lib/nextVersion";
 import { notifyDiscord } from "./lib/notifyDiscord";
 import { DIST_DIR, PACKAGE_NAME } from "./lib/paths";
@@ -34,6 +35,7 @@ if (dryRun) {
   console.log(`Dry run complete for ${PACKAGE_NAME}@${version}`);
 } else {
   await writeRootVersion(version);
+  await createGithubRelease(version);
   await notifyDiscord(webhookUrl, version);
   console.log(`Published ${PACKAGE_NAME}@${version}`);
 }
