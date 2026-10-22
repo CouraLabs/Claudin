@@ -8,5 +8,5 @@ export const isDirectory = async (path: string): Promise<boolean> =>
 const expandHome = (path: string): string =>
   path === "~" || path.startsWith("~/") ? join(homedir(), path.slice(1)) : path;
 
-export const resolveDirectory = (base: string, path: string): string =>
+export const resolveUserPath = (base: string, path: string): string =>
   resolve(base, expandHome(path.trim()));

@@ -10,7 +10,7 @@ import {
   TextRenderable,
 } from "@opentui/core";
 import { formatDuration } from "../format/formatMetrics.ts";
-import { TOOL_GLYPH } from "../format/glyphs.ts";
+import { COLLAPSE_GLYPHS } from "../format/glyphs.ts";
 import { toolColor } from "../format/statusLabel.ts";
 import { buildToolDiff, type ToolDiff } from "../format/toolDiff.ts";
 import { formatToolInput } from "../format/toolInputText.ts";
@@ -18,6 +18,7 @@ import { summarizeToolCall } from "../format/toolSummary.ts";
 import { clipLines } from "../format/truncateText.ts";
 import { Theme } from "../theme/colors.ts";
 import { ApprovalPanel } from "./approvalPanel.ts";
+import { createDiffView } from "./createDiffView.ts";
 import { QuestionPanel } from "./questionPanel.ts";
 
 const OUTPUT_LINES = 6;
@@ -40,6 +41,8 @@ export class ToolCallView {
   readonly question: QuestionPanel;
   diff?: DiffRenderable;
   call?: ToolCall;
+  toolDiff?: ToolDiff;
+  hovered = false;
   draft?: QuestionDraft | null;
   callId = "";
   elapsed = "";
@@ -54,6 +57,8 @@ export class ToolCallView {
       flexDirection: "row",
       justifyContent: "space-between",
       onMouseDown: toggle,
+      onMouseOver: () => this.setHovered(true),
+      onMouseOut: () => this.setHovered(false),
     });
     this.title = new TextRenderable(renderer, { content: "", wrapMode: "none", flexShrink: 1 });
     this.duration = new TextRenderable(renderer, { content: "", flexShrink: 0, marginLeft: 2 });
@@ -84,6 +89,7 @@ export class ToolCallView {
     this.call = call;
     this.callId = call.id;
     const diff = buildToolDiff(call);
+    this.toolDiff = diff;
     this.renderTitle(call, diff);
     this.renderBody(call, diff);
     const awaiting = call.status === "awaiting_approval";
@@ -105,11 +111,18 @@ export class ToolCallView {
     this.duration.content = new StyledText([fg(Theme.fg.muted)(elapsed)]);
   }
 
+  setHovered(hovered: boolean): void {
+    this.hovered = hovered;
+    if (this.call) this.renderTitle(this.call, this.toolDiff);
+  }
+
   renderTitle(call: ToolCall, diff?: ToolDiff): void {
     const stats = diff ? ` (+${diff.additions} -${diff.deletions})` : "";
+    const glyph = call.expanded ? COLLAPSE_GLYPHS.expanded : COLLAPSE_GLYPHS.collapsed;
+    const accent = this.hovered ? Theme.accent.brand : undefined;
     this.title.content = new StyledText([
-      fg(toolColor(call.status))(`${TOOL_GLYPH} `),
-      bold(fg(Theme.fg.primary)(call.name)),
+      fg(accent ?? toolColor(call.status))(`${glyph} `),
+      bold(fg(accent ?? Theme.fg.primary)(call.name)),
       fg(Theme.fg.secondary)(` ${summarizeToolCall(call)}`),
       fg(Theme.fg.muted)(stats),
     ]);
@@ -145,18 +158,7 @@ export class ToolCallView {
       this.diff.diff = diff.patch;
       return;
     }
-    this.diff = new DiffRenderable(this.renderer, {
-      diff: diff.patch,
-      filetype: diff.filetype,
-      syntaxStyle: this.hooks.syntaxStyle,
-      view: "unified",
-      showLineNumbers: true,
-      addedBg: Theme.diff.addedBg,
-      removedBg: Theme.diff.removedBg,
-      addedSignColor: Theme.status.success,
-      removedSignColor: Theme.status.danger,
-      flexShrink: 0,
-    });
+    this.diff = createDiffView(this.renderer, this.hooks.syntaxStyle, diff.patch, diff.filetype);
     this.body.add(this.diff);
   }
 }

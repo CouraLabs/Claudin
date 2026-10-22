@@ -6,6 +6,11 @@ export const BRANCH_GLYPH = "⎇";
 
 export const TOOL_GLYPH = "◆";
 
+export const COLLAPSE_GLYPHS = {
+  collapsed: "🞂",
+  expanded: "🞃",
+} as const;
+
 export const APPROVAL_GLYPH = "!";
 
 export const DONE_GLYPH = "✓";

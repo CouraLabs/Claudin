@@ -1,10 +1,12 @@
 import { isCustomRow } from "@claudin/events";
 import type { KeyEvent } from "@opentui/core";
+import type { DiffViewerPanel } from "../components/diffViewerPanel.ts";
 import type { ScrollbackView } from "../components/scrollbackView.ts";
 import type { AppStore } from "../store/appStore.ts";
 import { isAgentBusy } from "./agentBusy.ts";
 import { routeAutocompleteKey } from "./autocomplete.ts";
 import { adjustBackground, closeBackgroundEditor, saveBackground } from "./backgroundActions.ts";
+import { type InputEditor, routeHistoryKey, routeHistorySearchKey } from "./historyActions.ts";
 import { cycleModel } from "./localCommands.ts";
 import { confirmPicker } from "./pickerActions.ts";
 import { answerApproval, cancelTurn, type PromptDelivery } from "./promptActions.ts";
@@ -18,9 +20,10 @@ export type KeyTargets = {
   store: AppStore;
   presses: KeyPresses;
   scrollback: ScrollbackView;
+  diffViewer: DiffViewerPanel;
+  editor: InputEditor;
   acceptCompletion: () => void;
   submitInput: (delivery: PromptDelivery) => void;
-  isInputEmpty: () => boolean;
   exit: () => void;
 };
 
@@ -108,8 +111,8 @@ const routePageScroll: KeyRoute = (key, { scrollback }) => {
   return true;
 };
 
-const routeScrollback: KeyRoute = (key, { store, scrollback, isInputEmpty }) => {
-  if (store.state.ui.focus !== "scrollback" && !isInputEmpty()) return false;
+const routeScrollback: KeyRoute = (key, { store, scrollback, editor }) => {
+  if (store.state.ui.focus !== "scrollback" && editor.read() !== "") return false;
   if (key.name !== "up" && key.name !== "down") return false;
   scrollback.scrollByLines(key.name === "up" ? -1 : 1);
   return true;
@@ -129,6 +132,28 @@ const routeBackgroundEditor: KeyRoute = (key, { store }) => {
   BACKGROUND_ACTIONS[key.name]?.(store, key);
   return true;
 };
+
+const DIFF_VIEWER_ACTIONS: Record<string, (targets: KeyTargets) => void> = {
+  left: ({ store }) => store.emit({ type: "ui.diff.viewer.moved", delta: -1 }),
+  right: ({ store }) => store.emit({ type: "ui.diff.viewer.moved", delta: 1 }),
+  up: ({ diffViewer }) => diffViewer.scrollByLines(-1),
+  down: ({ diffViewer }) => diffViewer.scrollByLines(1),
+  pageup: ({ diffViewer }) => diffViewer.scrollByPage(-1),
+  pagedown: ({ diffViewer }) => diffViewer.scrollByPage(1),
+  escape: ({ store }) => store.emit({ type: "ui.diff.viewer.closed" }),
+  q: ({ store }) => store.emit({ type: "ui.diff.viewer.closed" }),
+};
+
+const routeDiffViewer: KeyRoute = (key, targets) => {
+  if (!targets.store.state.ui.diffViewer) return false;
+  DIFF_VIEWER_ACTIONS[key.name]?.(targets);
+  return true;
+};
+
+const routeHistory: KeyRoute = (key, { store, editor }) => routeHistoryKey(key, store, editor);
+
+const routeHistorySearch: KeyRoute = (key, { store, editor }) =>
+  routeHistorySearchKey(key, store, editor);
 
 const routePicker: KeyRoute = (key, { store }) => {
   if (!store.state.ui.picker) return false;
@@ -159,14 +184,17 @@ const ROUTES: KeyRoute[] = [
   routeExit,
   routeApproval,
   routeQuestion,
+  routeDiffViewer,
   routeBackgroundEditor,
   routePicker,
   routeModelCycle,
   routeDelivery,
+  routeHistorySearch,
   routeCompletion,
   routeDoubleEscape,
   routeFocusCycle,
   routePageScroll,
+  routeHistory,
   routeScrollback,
 ];
 

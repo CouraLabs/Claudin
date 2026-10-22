@@ -14,3 +14,8 @@ test("the profile replaces the system prompt with the ADHD rules", () => {
   expect(prompt).toContain("10. No preamble, no recap, no closing pleasantries.");
   expect(prompt.endsWith("(the harness wins; keep the shape).")).toBe(true);
 });
+
+test("the profile checkpoints files and replays prompts for rewind ids", () => {
+  expect(AGENT_PROFILE_OPTIONS.enableFileCheckpointing).toBe(true);
+  expect(AGENT_PROFILE_OPTIONS.extraArgs).toEqual({ "replay-user-messages": null });
+});

@@ -1,5 +1,6 @@
-import type { AgentResponseEvent, EventClient, ResponseListener } from "@claudin/daemon/client";
+import type { DaemonEvent, DaemonEventListener, EventClient } from "@claudin/daemon/client";
 import type { RequestEvent } from "@claudin/events";
+import { rgbToHex } from "@opentui/core";
 import { createTestRenderer } from "@opentui/core/testing";
 import { afterEach, expect, test } from "vitest";
 import { startTui, type TuiOptions } from "./startTui.ts";
@@ -7,14 +8,14 @@ import { Theme } from "./theme/colors.ts";
 
 class FakeClient implements EventClient {
   sent: RequestEvent[] = [];
-  listener: ResponseListener = () => {};
+  listener: DaemonEventListener = () => {};
   closed = false;
 
   send(request: RequestEvent) {
     this.sent.push(request);
   }
 
-  subscribe(listener: ResponseListener) {
+  subscribe(listener: DaemonEventListener) {
     this.listener = listener;
     return () => {};
   }
@@ -23,8 +24,8 @@ class FakeClient implements EventClient {
     this.closed = true;
   }
 
-  receive(response: unknown) {
-    this.listener(response as AgentResponseEvent);
+  receive(response: unknown, peer = false) {
+    this.listener(response as DaemonEvent, peer);
   }
 
   receiveMessage(message: unknown) {
@@ -229,26 +230,47 @@ test("tool calls render collapsed without a group title and expand on click", as
   client.receiveMessage(toolResult("t3", "alpha.txt"));
   const output = await harness.frame();
   expect(output).not.toContain("Tool Execution Group");
-  expect(output).toContain("◆ Read src/server.ts");
-  expect(output).toContain("◆ Edit src/auth.ts (+1 -1)");
-  expect(output).toContain("◆ Bash ls");
+  expect(output).toContain("🞂 Read src/server.ts");
+  expect(output).toContain("🞂 Edit src/auth.ts (+1 -1)");
+  expect(output).toContain("🞂 Bash ls");
   expect(output).not.toContain("authenticate()");
   expect(output).not.toContain("alpha.txt");
   expect(output).toContain("Executing…");
 
-  await clickText(harness, "◆ Edit src/auth.ts");
+  await clickText(harness, "🞂 Edit src/auth.ts");
   let expanded = await harness.frame();
+  expect(expanded).toContain("🞃 Edit src/auth.ts");
   expect(expanded).toMatch(/\+ export function authenticate\(\) \{\}/);
   expect(expanded).toMatch(/- function oldAuth\(\) \{\}/);
   expect(expanded).not.toContain("alpha.txt");
 
-  await clickText(harness, "◆ Bash ls");
+  await clickText(harness, "🞂 Bash ls");
   expect(await harness.frame()).toContain("alpha.txt");
 
-  await clickText(harness, "◆ Edit src/auth.ts");
+  await clickText(harness, "🞃 Edit src/auth.ts");
   expanded = await harness.frame();
   expect(expanded).not.toContain("authenticate()");
   expect(expanded).toContain("alpha.txt");
+});
+
+test("hovering a tool call header highlights it with the accent color", async () => {
+  const harness = await createHarness();
+  await submit(harness, "run");
+  harness.client.receiveMessage(assistantMessage("m1", [toolUse("t1", "Bash", { command: "ls" })]));
+  const lines = (await harness.frame()).split("\n");
+  const row = lines.findIndex((line) => line.includes("🞂 Bash ls"));
+  const column = (lines[row] ?? "").indexOf("Bash");
+  const nameColor = async () => {
+    await harness.frame();
+    const spans = harness.captureSpans().lines[row]?.spans ?? [];
+    const span = spans.find((candidate) => candidate.text.includes("Bash"));
+    return span ? rgbToHex(span.fg) : "";
+  };
+  expect(await nameColor()).not.toBe(Theme.accent.brand);
+  await harness.mockMouse.moveTo(column, row);
+  expect(await nameColor()).toBe(Theme.accent.brand);
+  await harness.mockMouse.moveTo(column, row + 5);
+  expect(await nameColor()).not.toBe(Theme.accent.brand);
 });
 
 test("each tool call shows its own execution time on the right", async () => {
@@ -256,8 +278,8 @@ test("each tool call shows its own execution time on the right", async () => {
   await submit(harness, "run");
   harness.client.receiveMessage(assistantMessage("m1", [toolUse("t1", "Bash", { command: "ls" })]));
   harness.client.receiveMessage(toolResult("t1", "ok"));
-  const line = (await harness.frame()).split("\n").find((row) => row.includes("◆ Bash ls")) ?? "";
-  expect(line).toMatch(/◆ Bash ls\s+\d+\.\ds\s*$/);
+  const line = (await harness.frame()).split("\n").find((row) => row.includes("🞂 Bash ls")) ?? "";
+  expect(line).toMatch(/🞂 Bash ls\s+\d+\.\ds\s*$/);
 });
 
 test("approval prompts can be answered with the keyboard", async () => {
@@ -954,4 +976,169 @@ test("a stored background loaded at startup is applied", async () => {
   });
   await harness.frame();
   expect(Theme.bg.default).toBe("#00ff00");
+});
+
+async function submitCommand(harness: Harness, command: string) {
+  await submit(harness, command);
+  harness.mockInput.pressEnter();
+}
+
+const finishTurn = (harness: Harness) =>
+  harness.client.receiveMessage({ type: "result", subtype: "success", is_error: false });
+
+const inputLine = async (harness: Harness) =>
+  (await harness.frame()).split("\n").findLast((line) => line.includes("❯ ")) ?? "";
+
+test("up and down recall earlier prompts and ctrl+r searches them", async () => {
+  const harness = await createHarness();
+  await submit(harness, "first idea");
+  finishTurn(harness);
+  await submit(harness, "second idea");
+  finishTurn(harness);
+  harness.mockInput.pressArrow("up");
+  expect(await inputLine(harness)).toContain("second idea");
+  harness.mockInput.pressArrow("up");
+  expect(await inputLine(harness)).toContain("first idea");
+  harness.mockInput.pressArrow("down");
+  harness.mockInput.pressArrow("down");
+  expect(await inputLine(harness)).not.toContain("idea");
+  await harness.mockInput.typeText("fir");
+  harness.mockInput.pressKey("r", { ctrl: true });
+  expect(await inputLine(harness)).toContain("first idea");
+});
+
+test("/fork copies the session and then forks the agent conversation", async () => {
+  const harness = await createHarness();
+  await submitCommand(harness, "/fork");
+  expect(harness.client.lastOfType("session.fork.requested")).toBeDefined();
+  harness.client.receive({
+    type: "session.forked",
+    sessionId: "s2",
+    events: [{ timestamp: 1, event: { type: "agent.session.created", agentSessionId: "a1" } }],
+  });
+  expect(harness.client.lastOfType("agent.session.fork.requested")).toMatchObject({
+    agentSessionId: "a1",
+  });
+  expect(await harness.frame()).toContain("Session forked");
+});
+
+test("/rewind lists checkpointed prompts and rewinds files to the chosen one", async () => {
+  const harness = await createHarness();
+  await submit(harness, "add login");
+  harness.client.receiveMessage({
+    type: "user",
+    uuid: "u1",
+    isReplay: true,
+    parent_tool_use_id: null,
+    message: { role: "user", content: "add login" },
+  });
+  finishTurn(harness);
+  await submitCommand(harness, "/rewind");
+  expect(await harness.frame()).toContain("Restore files to before this prompt");
+  harness.mockInput.pressEnter();
+  expect(harness.client.lastOfType("agent.files.rewind.requested")).toEqual({
+    type: "agent.files.rewind.requested",
+    agentSessionId: "a1",
+    userMessageId: "u1",
+  });
+  harness.client.receive({
+    type: "agent.files.rewound",
+    userMessageId: "u1",
+    filesChanged: ["src/login.ts"],
+    insertions: 0,
+    deletions: 12,
+  });
+  expect(await harness.frame()).toContain("Rewound 1 file(s) (+0 -12): src/login.ts");
+});
+
+test("/view-diffs asks for the edited files and shows their diffs until escape", async () => {
+  const harness = await createHarness(100, 32);
+  await submit(harness, "edit it");
+  harness.client.receiveMessage(
+    assistantMessage("m1", [toolUse("e1", "Edit", { file_path: "/work/app/src/a.ts" })]),
+  );
+  harness.client.receiveMessage(toolResult("e1", "ok"));
+  finishTurn(harness);
+  await submitCommand(harness, "/view-diffs");
+  expect(harness.client.lastOfType("workspace.diff.requested")?.paths).toEqual([
+    "/work/app/src/a.ts",
+  ]);
+  harness.client.receive({
+    type: "workspace.diff.received",
+    files: [
+      {
+        path: "src/a.ts",
+        patch: "--- a/src/a.ts\n+++ b/src/a.ts\n@@ -1 +1 @@\n-old line\n+new line\n",
+        additions: 1,
+        deletions: 1,
+      },
+    ],
+  });
+  const output = await harness.frame();
+  expect(output).toContain("Session diffs");
+  expect(output).toContain("new line");
+  harness.mockInput.pressEscape();
+  expect(await harness.frame()).not.toContain("Session diffs");
+});
+
+test("/export and /search reach the daemon and search results open a picker", async () => {
+  const harness = await createHarness();
+  await submit(harness, "/export notes.md");
+  expect(harness.client.lastOfType("session.export.requested")?.path).toBe("notes.md");
+  await submit(harness, "/search webhook");
+  expect(harness.client.lastOfType("session.search.requested")?.query).toBe("webhook");
+  harness.client.receive({
+    type: "session.search.received",
+    query: "webhook",
+    sessions: [{ id: "old", title: "…fix the webhook…", cwd: "/work/app", updatedAt: 0 }],
+  });
+  const output = await harness.frame();
+  expect(output).toContain("Matching sessions");
+  expect(output).toContain("fix the webhook");
+  harness.mockInput.pressEnter();
+  expect(harness.client.lastOfType("session.restore.requested")?.sessionId).toBe("old");
+});
+
+test("attaching syncs the live session instead of starting a new agent", async () => {
+  const harness = await createHarness(100, 32, { attach: true });
+  const types = harness.client.sent.map((request) => request.type);
+  expect(types).toContain("session.sync.requested");
+  expect(types).not.toContain("agent.session.create.requested");
+  harness.client.receive({
+    type: "session.synced",
+    sessionId: "live",
+    agentLive: true,
+    events: [
+      { timestamp: 1, event: { type: "agent.session.created", agentSessionId: "a9" } },
+      {
+        timestamp: 2,
+        event: { type: "agent.prompt.requested", agentSessionId: "a9", content: "shared work" },
+      },
+    ],
+  });
+  expect(await harness.frame()).toContain("shared work");
+  expect(harness.client.lastOfType("agent.session.resume.requested")).toBeUndefined();
+});
+
+test("attaching to a daemon without a live agent resumes the conversation", async () => {
+  const harness = await createHarness(100, 32, { attach: true });
+  harness.client.receive({
+    type: "session.synced",
+    sessionId: "stored",
+    agentLive: false,
+    events: [{ timestamp: 1, event: { type: "agent.session.created", agentSessionId: "a9" } }],
+  });
+  expect(harness.client.lastOfType("agent.session.resume.requested")?.agentSessionId).toBe("a9");
+});
+
+test("events from peers update the view without triggering local reactions", async () => {
+  const harness = await createHarness();
+  const before = harness.client.sent.length;
+  harness.client.receive({ type: "session.created", sessionId: "s2" }, true);
+  harness.client.receive(
+    { type: "agent.prompt.requested", agentSessionId: "a1", content: "from a peer" },
+    true,
+  );
+  expect(harness.client.sent.length).toBe(before);
+  expect(await harness.frame()).toContain("from a peer");
 });

@@ -1,3 +1,6 @@
+import { THEME_NAMES } from "../models/themeNames.ts";
+import type { FocusTarget, PickerKind, UiEvent } from "../requests/uiEvents.ts";
+import type { SessionState } from "../session/sessionState.ts";
 import { appendNotice } from "./appendEntry.ts";
 import { changeAutocomplete, moveAutocomplete } from "./reduceAutocomplete.ts";
 import {
@@ -6,16 +9,16 @@ import {
   moveBackgroundChannel,
   openBackgroundEditor,
 } from "./reduceBackground.ts";
+import { listCheckpoints } from "./reduceCheckpoint.ts";
+import { closeDiffViewer, moveDiffViewer } from "./reduceDiffViewer.ts";
+import { moveHistory, resetHistory, searchHistory } from "./reduceHistory.ts";
 import {
   changeQuestionCustom,
   moveQuestionCursor,
   recordQuestionAnswer,
   toggleQuestionPick,
 } from "./reduceQuestion.ts";
-import type { SessionState } from "../session/sessionState.ts";
-import { THEME_NAMES } from "../models/themeNames.ts";
 import { isToolsEntry } from "./toolGroups.ts";
-import type { FocusTarget, PickerKind, UiEvent } from "../requests/uiEvents.ts";
 import { wrapIndex } from "./wrapIndex.ts";
 
 const FOCUS_ORDER: FocusTarget[] = ["input", "scrollback"];
@@ -43,6 +46,7 @@ const toggleTool = (state: SessionState, callId: string): SessionState => ({
 const pickerSize = (state: SessionState, kind: PickerKind): number => {
   if (kind === "model") return state.models.length;
   if (kind === "theme") return THEME_NAMES.length;
+  if (kind === "rewind") return listCheckpoints(state).length;
   return state.sessionList.length;
 };
 
@@ -59,6 +63,12 @@ const openThemePicker = (state: SessionState): SessionState => {
   const selected = Math.max(THEME_NAMES.indexOf(state.theme), 0);
   return { ...state, ui: { ...state.ui, picker: { kind: "theme", selected } } };
 };
+
+function openRewindPicker(state: SessionState): SessionState {
+  const size = listCheckpoints(state).length;
+  if (size === 0) return appendNotice(state, "No checkpoints yet: send a prompt first");
+  return { ...state, ui: { ...state.ui, picker: { kind: "rewind", selected: size - 1 } } };
+}
 
 export function reduceUi(state: SessionState, event: UiEvent): SessionState {
   switch (event.type) {
@@ -80,6 +90,18 @@ export function reduceUi(state: SessionState, event: UiEvent): SessionState {
       return openThemePicker(state);
     case "ui.theme.selected":
       return appendNotice({ ...state, theme: event.theme }, `Theme set to ${event.theme}`);
+    case "ui.rewind.picker.opened":
+      return openRewindPicker(state);
+    case "ui.history.moved":
+      return moveHistory(state, event.delta, event.draft);
+    case "ui.history.searched":
+      return searchHistory(state, event.draft);
+    case "ui.history.reset":
+      return resetHistory(state);
+    case "ui.diff.viewer.moved":
+      return moveDiffViewer(state, event.delta);
+    case "ui.diff.viewer.closed":
+      return closeDiffViewer(state);
     case "ui.background.editor.opened":
       return openBackgroundEditor(state);
     case "ui.background.editor.closed":

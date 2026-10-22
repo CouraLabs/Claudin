@@ -1,8 +1,8 @@
 import { z } from "zod";
-import { agentResponseSchemas } from "./agentResponseEvents.ts";
 import { optionsResponseSchemas } from "../requests/optionsEvents.ts";
-import type { SessionSummary, StoredEvent } from "../session/sessionSummary.ts";
 import { workspaceResponseSchemas } from "../requests/workspaceEvents.ts";
+import type { SessionSummary, StoredEvent } from "../session/sessionSummary.ts";
+import { agentResponseSchemas } from "./agentResponseEvents.ts";
 
 export const responseEventSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("session.created"), sessionId: z.string() }),
@@ -12,9 +12,26 @@ export const responseEventSchema = z.discriminatedUnion("type", [
     events: z.custom<StoredEvent[]>(),
   }),
   z.object({
+    type: z.literal("session.forked"),
+    sessionId: z.string(),
+    events: z.custom<StoredEvent[]>(),
+  }),
+  z.object({
+    type: z.literal("session.synced"),
+    sessionId: z.string(),
+    events: z.custom<StoredEvent[]>(),
+    agentLive: z.boolean(),
+  }),
+  z.object({
     type: z.literal("session.list.received"),
     sessions: z.custom<SessionSummary[]>(),
   }),
+  z.object({
+    type: z.literal("session.search.received"),
+    query: z.string(),
+    sessions: z.custom<SessionSummary[]>(),
+  }),
+  z.object({ type: z.literal("session.exported"), path: z.string() }),
   z.object({ type: z.literal("request.failed"), reason: z.string() }),
   ...agentResponseSchemas,
   ...workspaceResponseSchemas,

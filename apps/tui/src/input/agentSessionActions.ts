@@ -27,6 +27,12 @@ export function resumeAgentSession(store: AppStore): void {
   if (!resumed) startAgentSession(store);
 }
 
+export function forkAgentSession(store: AppStore): void {
+  const options = buildSessionOptions(store);
+  const forked = requestAgent(store, { type: "agent.session.fork.requested", options }, "ignore");
+  if (!forked) startAgentSession(store);
+}
+
 export function requestWorkspaceInfo(store: AppStore): void {
   store.request({ type: "workspace.info.requested" });
 }
@@ -37,6 +43,12 @@ export function requestSessionInfo(store: AppStore): void {
 
 export function requestRateLimit(store: AppStore): void {
   requestAgent(store, { type: "agent.rate_limit.requested" }, "ignore");
+}
+
+export function attachSession(store: AppStore): void {
+  store.request({ type: "agent.rate_limit.cached.requested" });
+  store.request({ type: "options.load.requested" });
+  store.request({ type: "session.sync.requested" });
 }
 
 export function bootSession(store: AppStore, resumeSessionId?: string): void {

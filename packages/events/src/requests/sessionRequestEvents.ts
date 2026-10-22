@@ -4,4 +4,8 @@ export const sessionRequestSchemas = [
   z.object({ type: z.literal("session.create.requested") }),
   z.object({ type: z.literal("session.restore.requested"), sessionId: z.string() }),
   z.object({ type: z.literal("session.list.requested") }),
+  z.object({ type: z.literal("session.fork.requested") }),
+  z.object({ type: z.literal("session.sync.requested") }),
+  z.object({ type: z.literal("session.export.requested"), path: z.string().optional() }),
+  z.object({ type: z.literal("session.search.requested"), query: z.string() }),
 ] as const;

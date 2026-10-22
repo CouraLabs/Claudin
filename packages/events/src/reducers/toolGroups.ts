@@ -1,6 +1,11 @@
-import { appendEntry } from "./appendEntry.ts";
 import type { SessionState } from "../session/sessionState.ts";
-import type { AgentStatus, ToolCall, ToolsEntry, TranscriptEntry } from "../session/transcriptTypes.ts";
+import type {
+  AgentStatus,
+  ToolCall,
+  ToolsEntry,
+  TranscriptEntry,
+} from "../session/transcriptTypes.ts";
+import { appendEntry } from "./appendEntry.ts";
 
 const OPEN_STATUSES = new Set(["running", "awaiting_approval", "awaiting_answer"]);
 
@@ -8,6 +13,19 @@ export const isToolsEntry = (entry: TranscriptEntry): entry is ToolsEntry => ent
 
 export const listToolCalls = (state: SessionState): ToolCall[] =>
   state.transcript.filter(isToolsEntry).flatMap((entry) => entry.calls);
+
+const EDIT_TOOLS = new Set(["Write", "Edit", "MultiEdit", "NotebookEdit"]);
+
+const readEditedPath = ({ input }: ToolCall): unknown => input.file_path ?? input.notebook_path;
+
+export const listEditedFiles = (state: SessionState): string[] => [
+  ...new Set(
+    listToolCalls(state)
+      .filter((call) => EDIT_TOOLS.has(call.name) && call.status === "completed")
+      .map(readEditedPath)
+      .filter((path): path is string => typeof path === "string"),
+  ),
+];
 
 export function countTurnTools(state: SessionState): number {
   const lastUser = state.transcript.findLastIndex((entry) => entry.kind === "user");

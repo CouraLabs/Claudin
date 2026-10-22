@@ -26,7 +26,7 @@ export type ToolCall = {
 };
 
 export type TranscriptEntry =
-  | { kind: "user"; id: string; at: number; text: string }
+  | { kind: "user"; id: string; at: number; text: string; checkpointId?: string }
   | {
       kind: "assistant";
       id: string;
@@ -40,6 +40,8 @@ export type TranscriptEntry =
   | { kind: "tools"; id: string; calls: ToolCall[] };
 
 export type ToolsEntry = Extract<TranscriptEntry, { kind: "tools" }>;
+
+export type UserEntry = Extract<TranscriptEntry, { kind: "user" }>;
 
 export type TokenUsage = {
   input: number;

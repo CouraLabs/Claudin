@@ -52,6 +52,11 @@ test("filters slash commands by prefix", () => {
     "/effort",
     "/mcp",
     "/clear",
+    "/fork",
+    "/rewind",
+    "/view-diffs",
+    "/export",
+    "/search",
     "/quit",
   ]);
   expect(listSlashCommands("m", [])).toEqual(["/model", "/mcp"]);

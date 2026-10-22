@@ -1,5 +1,6 @@
 {
   "name": "claudin",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
   "packageManager": "bun@1.4.3",
@@ -13,13 +14,17 @@
     "lint": "turbo run lint",
     "format": "turbo run format",
     "typecheck": "turbo run typecheck",
-    "test": "turbo run test"
+    "test": "turbo run test",
+    "build:app": "bun scripts/build.ts",
+    "promote": "bun scripts/promotion.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.15",
     "@types/bun": "^1.4.3",
+    "@types/semver": "^7.8.0",
     "oxc-parser": "^0.155.0",
     "oxc-walker": "^1.1.1",
+    "semver": "^7.8.5",
     "turbo": "^2.11.10",
     "typescript": "^7.0.2",
     "vitest": "^5.0.5"

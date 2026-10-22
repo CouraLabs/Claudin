@@ -10,12 +10,13 @@ import {
   startSession,
 } from "@claudin/events";
 import { OPTIONS_PATH } from "../persistence/optionsFile.ts";
-import { isDirectory, resolveDirectory } from "../workspace/resolveDirectory.ts";
+import { isDirectory, resolveUserPath } from "../workspace/resolvePath.ts";
 
 export const SESSIONS_DIRECTORY = join(homedir(), ".claudin", "sessions");
 
 type CreatedEvent = Extract<ResponseEvent, { type: "session.created" }>;
 type RestoredEvent = Extract<ResponseEvent, { type: "session.restored" }>;
+type ForkedEvent = Extract<ResponseEvent, { type: "session.forked" }>;
 
 export async function requireStoredDirectory(cwd: string): Promise<void> {
   if (!(await isDirectory(cwd))) throw new Error(`Session directory no longer exists: ${cwd}`);
@@ -47,8 +48,17 @@ export class DaemonContext {
     return restored;
   }
 
+  async forkCurrentSession(): Promise<ForkedEvent> {
+    const events = await this.store.read(this.session.id);
+    this.agents.closeAll();
+    const forked = new Session(crypto.randomUUID(), this.store);
+    await this.store.copy(this.session.id, forked.id);
+    this.session = forked;
+    return { type: "session.forked", sessionId: forked.id, events };
+  }
+
   async changeDirectory(path: string): Promise<{ cwd: string; created: CreatedEvent }> {
-    const cwd = resolveDirectory(this.cwd, path);
+    const cwd = resolveUserPath(this.cwd, path);
     if (!(await isDirectory(cwd))) throw new Error(`Not a directory: ${cwd}`);
     return { cwd, created: this.startFreshSession(cwd) };
   }

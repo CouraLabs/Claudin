@@ -1,11 +1,15 @@
 import type { ModelInfo, SDKMessage } from "@anthropic-ai/claude-agent-sdk";
+import type { PickerKind } from "../requests/uiEvents.ts";
 import type { AppEvent } from "../session/appEvent.ts";
+import { createSessionState, type SessionState } from "../session/sessionState.ts";
+import type { SessionSummary, StoredEvent } from "../session/sessionSummary.ts";
 import { appendNotice } from "./appendEntry.ts";
 import { carryDevice, startFreshSession } from "./carryOver.ts";
 import { reduceAgentMessage } from "./reduceAgentMessage.ts";
 import { reduceApprovalRequired, reduceApprovalResolved } from "./reduceApproval.ts";
 import { updateFileMatches } from "./reduceAutocomplete.ts";
 import { applyLoadedBackground, applySavedBackground } from "./reduceBackground.ts";
+import { openDiffViewer } from "./reduceDiffViewer.ts";
 import {
   describeServers,
   reduceEffortChanged,
@@ -17,33 +21,41 @@ import { reduceQuestionRequired, reduceQuestionResolved } from "./reduceQuestion
 import { reduceRateLimit } from "./reduceRateLimit.ts";
 import { stopStreaming } from "./reduceResult.ts";
 import { reduceUi } from "./reduceUi.ts";
-import { createSessionState, type SessionState } from "../session/sessionState.ts";
-import type { SessionSummary, StoredEvent } from "../session/sessionSummary.ts";
 import { settleOpenCalls } from "./toolGroups.ts";
+
+const replayEvents = (sessionId: string, stored: StoredEvent[]): SessionState =>
+  stored.reduce<SessionState>(
+    (current, { event, timestamp }) => reduceTimedEvent(current, event, timestamp),
+    createSessionState(sessionId),
+  );
+
+const adoptReplay = (state: SessionState, replayed: SessionState, sessionId: string) => ({
+  ...replayed,
+  ...carryDevice(state),
+  sessionId,
+  now: state.now,
+  ui: createSessionState(sessionId).ui,
+});
 
 function restoreSession(
   state: SessionState,
   sessionId: string,
   stored: StoredEvent[],
+  notice: string,
 ): SessionState {
-  const replayed = stored.reduce<SessionState>(
-    (current, { event, timestamp }) => reduceTimedEvent(current, event, timestamp),
-    createSessionState(sessionId),
-  );
+  const replayed = replayEvents(sessionId, stored);
   const settled = settleOpenCalls(stopStreaming(replayed), "Interrupted");
   return appendNotice(
-    {
-      ...settled,
-      ...carryDevice(state),
-      sessionId,
-      status: "idle",
-      queuedTurns: 0,
-      now: state.now,
-      ui: createSessionState(sessionId).ui,
-    },
-    "Session restored",
+    { ...adoptReplay(state, settled, sessionId), status: "idle", queuedTurns: 0 },
+    notice,
   );
 }
+
+const syncSession = (state: SessionState, sessionId: string, stored: StoredEvent[]) =>
+  appendNotice(
+    adoptReplay(state, replayEvents(sessionId, stored), sessionId),
+    "Attached to the live session",
+  );
 
 function openModelPicker(state: SessionState, models: ModelInfo[]): SessionState {
   const current = models.findIndex((model) => model.value === state.model);
@@ -51,11 +63,21 @@ function openModelPicker(state: SessionState, models: ModelInfo[]): SessionState
   return { ...state, models, ui: { ...state.ui, picker } };
 }
 
-function openSessionPicker(state: SessionState, sessions: SessionSummary[]): SessionState {
-  if (sessions.length === 0) return appendNotice(state, "No stored sessions yet");
-  const picker = { kind: "session", selected: 0 } as const;
+function openSessionPicker(
+  state: SessionState,
+  sessions: SessionSummary[],
+  kind: Extract<PickerKind, "session" | "search">,
+  emptyNotice: string,
+): SessionState {
+  if (sessions.length === 0) return appendNotice(state, emptyNotice);
+  const picker = { kind, selected: 0 };
   return { ...state, sessionList: sessions, ui: { ...state.ui, picker } };
 }
+
+const describeRewind = (filesChanged: string[], insertions: number, deletions: number) =>
+  filesChanged.length === 0
+    ? "Rewind found no file changes to undo"
+    : `Rewound ${filesChanged.length} file(s) (+${insertions} -${deletions}): ${filesChanged.join(", ")}`;
 
 export const reduceTimedEvent = (state: SessionState, event: AppEvent, at: number): SessionState =>
   reduceSessionState({ ...state, now: at }, event);
@@ -72,7 +94,27 @@ export function reduceSessionState(state: SessionState, event: AppEvent): Sessio
     case "session.created":
       return startFreshSession(state, event.sessionId);
     case "session.restored":
-      return restoreSession(state, event.sessionId, event.events);
+      return restoreSession(state, event.sessionId, event.events, "Session restored");
+    case "session.forked":
+      return restoreSession(state, event.sessionId, event.events, "Session forked");
+    case "session.synced":
+      return syncSession(state, event.sessionId, event.events);
+    case "session.exported":
+      return appendNotice(state, `Transcript exported to ${event.path}`);
+    case "session.search.received":
+      return openSessionPicker(
+        state,
+        event.sessions,
+        "search",
+        `No sessions match "${event.query}"`,
+      );
+    case "workspace.diff.received":
+      return openDiffViewer(state, event.files);
+    case "agent.files.rewound":
+      return appendNotice(
+        state,
+        describeRewind(event.filesChanged, event.insertions, event.deletions),
+      );
     case "agent.session.created":
       return { ...state, agentSessionId: event.agentSessionId };
     case "request.failed":
@@ -109,7 +151,7 @@ export function reduceSessionState(state: SessionState, event: AppEvent): Sessio
     case "agent.models.received":
       return openModelPicker(state, event.models);
     case "session.list.received":
-      return openSessionPicker(state, event.sessions);
+      return openSessionPicker(state, event.sessions, "session", "No stored sessions yet");
     case "workspace.cwd.changed":
       return appendNotice(
         {

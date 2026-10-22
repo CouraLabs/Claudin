@@ -7,13 +7,13 @@ import type {
   SlashCommand,
 } from "@anthropic-ai/claude-agent-sdk";
 import { z } from "zod";
+import { askedQuestionsSchema } from "../models/askedQuestion.ts";
+import { sdkValue } from "../models/sdkValue.ts";
 import {
   approvalDecisionSchema,
   effortLevelSchema,
   permissionModeSchema,
 } from "../requests/agentRequestEvents.ts";
-import { askedQuestionsSchema } from "../models/askedQuestion.ts";
-import { sdkValue } from "../models/sdkValue.ts";
 
 const agentSessionId = z.string();
 
@@ -72,5 +72,12 @@ export const agentResponseSchemas = [
   z.object({
     type: z.literal("agent.rate_limit.received"),
     rateLimit: sdkValue<SDKControlGetUsageResponse["rate_limits"]>(),
+  }),
+  z.object({
+    type: z.literal("agent.files.rewound"),
+    userMessageId: z.string(),
+    filesChanged: z.array(z.string()),
+    insertions: z.number(),
+    deletions: z.number(),
   }),
 ] as const;

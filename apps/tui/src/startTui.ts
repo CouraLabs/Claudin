@@ -10,6 +10,7 @@ import {
 } from "@claudin/events";
 import { BoxRenderable, type CliRenderer, createCliRenderer } from "@opentui/core";
 import { BackgroundPanel } from "./components/backgroundPanel.ts";
+import { DiffViewerPanel } from "./components/diffViewerPanel.ts";
 import { HeaderBar } from "./components/headerBar.ts";
 import { ListPopover } from "./components/listPopover.ts";
 import { PromptInput } from "./components/promptInput.ts";
@@ -18,7 +19,7 @@ import { SessionInfoBar } from "./components/sessionInfoBar.ts";
 import { StatusLine } from "./components/statusLine.ts";
 import { buildListView } from "./format/listViews.ts";
 import { isStatusBusy } from "./input/agentBusy.ts";
-import { bootSession, requestRateLimit } from "./input/agentSessionActions.ts";
+import { attachSession, bootSession, requestRateLimit } from "./input/agentSessionActions.ts";
 import { acceptAutocomplete, syncAutocomplete } from "./input/autocomplete.ts";
 import {
   answerApproval,
@@ -28,6 +29,7 @@ import {
 } from "./input/promptActions.ts";
 import { createKeyPresses, routeKey } from "./input/routeKeys.ts";
 import { reactToEvent } from "./input/sessionReactions.ts";
+import { TurnNotifier } from "./notify/turnNotifier.ts";
 import { AppStore } from "./store/appStore.ts";
 import { applyTheme, Theme } from "./theme/colors.ts";
 import { createSyntaxStyle } from "./theme/syntaxStyle.ts";
@@ -39,6 +41,7 @@ const RATE_LIMIT_RETRY_MS = 5_000;
 export type TuiOptions = {
   renderer?: CliRenderer;
   resumeSessionId?: string;
+  attach?: boolean;
   onExit?: (sessionId: string) => void;
 };
 
@@ -73,8 +76,11 @@ export async function startTui(
     },
   });
 
+  const diffViewer = new DiffViewerPanel(activeRenderer, syntaxStyle);
   const submitInput = (delivery: PromptDelivery) => {
-    if (submitPrompt(store, input.text, delivery)) input.clear();
+    if (!submitPrompt(store, input.text, delivery)) return;
+    input.clear();
+    if (store.state.ui.history) store.emit({ type: "ui.history.reset" });
   };
 
   const input = new PromptInput(activeRenderer, {
@@ -88,8 +94,17 @@ export async function startTui(
     flexDirection: "column",
     backgroundColor: Theme.bg.default,
   });
-  for (const part of [header, scrollback, statusLine, popover, backgroundPanel, input, infoBar])
-    root.add(part.renderable);
+  const parts = [
+    header,
+    scrollback,
+    diffViewer,
+    statusLine,
+    popover,
+    backgroundPanel,
+    input,
+    infoBar,
+  ];
+  for (const part of parts) root.add(part.renderable);
   activeRenderer.root.add(root);
   for (const part of [header, statusLine, popover, backgroundPanel, input, infoBar]) {
     part.renderable.onMouseScroll = ({ scroll }) => {
@@ -110,6 +125,7 @@ export async function startTui(
       const previous = syntaxStyle;
       syntaxStyle = createSyntaxStyle(activeRenderer);
       scrollback.reset(syntaxStyle);
+      diffViewer.reset(syntaxStyle);
       previous.destroy();
     }
     root.backgroundColor = Theme.bg.default;
@@ -123,6 +139,8 @@ export async function startTui(
     statusLine.update(state);
     infoBar.update(state);
     scrollback.update(state);
+    scrollback.renderable.visible = state.ui.diffViewer === null;
+    diffViewer.update(state);
     popover.update(buildListView(state));
     backgroundPanel.update(state);
     const inputFocused = state.ui.focus === "input";
@@ -138,19 +156,26 @@ export async function startTui(
   };
 
   store.subscribe(render);
-  store.subscribeEvents((event) => {
+  const notifier = new TurnNotifier(activeRenderer);
+  store.subscribeOwnEvents((event) => {
     reactToEvent(store, event);
+    notifier.notify(event);
     if (event.type === "ui.exit.requested") activeRenderer.destroy();
   });
+  const editor = {
+    read: () => input.text,
+    replace: (text: string) => input.replaceText(text, text.length),
+  };
   const presses = createKeyPresses();
   activeRenderer.keyInput.on("keypress", (key) => {
     const targets = {
       store,
       presses,
       scrollback,
+      diffViewer,
+      editor,
       acceptCompletion: () => acceptAutocomplete(store, input),
       submitInput,
-      isInputEmpty: () => input.text === "",
       exit: () => activeRenderer.destroy(),
     };
     if (routeKey(key, targets)) key.preventDefault();
@@ -177,6 +202,7 @@ export async function startTui(
 
   render(store.state);
   input.setFocused(true);
-  bootSession(store, options.resumeSessionId);
+  if (options.attach) attachSession(store);
+  else bootSession(store, options.resumeSessionId);
   return activeRenderer;
 }

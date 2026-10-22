@@ -1,10 +1,19 @@
 import type { ModelInfo, SlashCommand } from "@anthropic-ai/claude-agent-sdk";
-import { DEFAULT_PERMISSION_MODE } from "../requests/agentRequestEvents.ts";
 import type { QuestionDraft } from "../models/askedQuestion.ts";
 import { type BackgroundColor, TRANSPARENT_BACKGROUND } from "../models/backgroundColor.ts";
 import type { PromptContent } from "../models/sdkValue.ts";
-import type { SessionSummary } from "./sessionSummary.ts";
 import { DEFAULT_THEME_NAME, type ThemeName } from "../models/themeNames.ts";
+import { DEFAULT_PERMISSION_MODE } from "../requests/agentRequestEvents.ts";
+import type {
+  Autocomplete,
+  BackgroundEditor,
+  DiffViewer,
+  FocusTarget,
+  Picker,
+  PromptHistory,
+} from "../requests/uiEvents.ts";
+import type { GitStats } from "../requests/workspaceEvents.ts";
+import type { SessionSummary } from "./sessionSummary.ts";
 import type {
   AgentStatus,
   LastRun,
@@ -12,8 +21,6 @@ import type {
   TokenUsage,
   TranscriptEntry,
 } from "./transcriptTypes.ts";
-import type { Autocomplete, BackgroundEditor, FocusTarget, Picker } from "../requests/uiEvents.ts";
-import type { GitStats } from "../requests/workspaceEvents.ts";
 
 export const DEFAULT_CONTEXT_WINDOW = 200_000;
 
@@ -23,6 +30,8 @@ export type UiState = {
   picker: Picker | null;
   backgroundEditor: BackgroundEditor | null;
   question: QuestionDraft | null;
+  history: PromptHistory | null;
+  diffViewer: DiffViewer | null;
 };
 
 export type SessionState = {
@@ -77,5 +86,13 @@ export const createSessionState = (sessionId: string): SessionState => ({
   transcript: [],
   entryCounter: 0,
   now: Date.now(),
-  ui: { focus: "input", autocomplete: null, picker: null, backgroundEditor: null, question: null },
+  ui: {
+    focus: "input",
+    autocomplete: null,
+    picker: null,
+    backgroundEditor: null,
+    question: null,
+    history: null,
+    diffViewer: null,
+  },
 });

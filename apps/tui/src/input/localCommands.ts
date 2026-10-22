@@ -1,19 +1,8 @@
 import { effortLevelSchema, permissionModeSchema, themeNameSchema } from "@claudin/events";
 import type { AppStore } from "../store/appStore.ts";
-import { isAgentBusy } from "./agentBusy.ts";
+import { guardIdle } from "./agentBusy.ts";
 import { requestAgent } from "./agentRequest.ts";
-
-export type SlashCommand = {
-  description: string;
-  run: (store: AppStore, argument: string) => void;
-};
-
-export function guardIdle(store: AppStore, action: string): boolean {
-  if (!isAgentBusy(store)) return true;
-  const text = `Agent is busy: cancel the current turn before ${action}`;
-  store.emit({ type: "ui.notice.posted", text });
-  return false;
-}
+import { type SlashCommand, WORKFLOW_COMMANDS } from "./workflowCommands.ts";
 
 export function cycleModel(store: AppStore): void {
   requestAgent(store, { type: "agent.model.cycle.requested" });
@@ -112,5 +101,6 @@ export const SLASH_COMMANDS: Record<string, SlashCommand> = {
       store.request({ type: "session.create.requested" });
     },
   },
+  ...WORKFLOW_COMMANDS,
   "/quit": QUIT_COMMAND,
 };

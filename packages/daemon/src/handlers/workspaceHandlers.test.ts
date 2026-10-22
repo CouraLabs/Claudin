@@ -45,3 +45,22 @@ test("workspace files skip ignored directories", async () => {
   const matches = (response as { matches: string[] }).matches;
   expect(matches.sort()).toEqual(["src/app.ts", "src/server.ts"]);
 });
+
+test("diff request returns patches for edited files, including untracked ones", async () => {
+  const context = await createWorkspace();
+  const { cwd } = context;
+  await Bun.$`git init -q && git add src && git -c user.email=t@t -c user.name=t commit -qm init`.cwd(
+    cwd,
+  );
+  await writeFile(join(cwd, "src", "app.ts"), "export const app = 1;\n");
+  await writeFile(join(cwd, "notes.md"), "hello\n");
+  const paths = [join(cwd, "src", "app.ts"), join(cwd, "notes.md"), join(cwd, "src", "server.ts")];
+  const [response] = await collect(context, { type: "workspace.diff.requested", paths });
+  expect(response).toMatchObject({
+    type: "workspace.diff.received",
+    files: [
+      { path: "src/app.ts", additions: 1, deletions: 0 },
+      { path: "notes.md", additions: 1, deletions: 0 },
+    ],
+  });
+});

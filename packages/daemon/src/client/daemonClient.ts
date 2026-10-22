@@ -1,21 +1,24 @@
 import {
+  daemonMessageSchema,
   type RequestEvent,
   type ResponseEvent,
-  responseEventSchema,
   type SDKMessage,
 } from "@claudin/events";
 
 export type AgentResponseEvent = ResponseEvent<SDKMessage>;
-export type ResponseListener = (response: AgentResponseEvent) => void;
+
+export type DaemonEvent = AgentResponseEvent | RequestEvent;
+
+export type DaemonEventListener = (event: DaemonEvent, peer: boolean) => void;
 
 export interface EventClient {
   send(request: RequestEvent): void;
-  subscribe(listener: ResponseListener): () => void;
+  subscribe(listener: DaemonEventListener): () => void;
   close(): void;
 }
 
 export class DaemonClient implements EventClient {
-  readonly listeners = new Set<ResponseListener>();
+  readonly listeners = new Set<DaemonEventListener>();
 
   private constructor(private socket: WebSocket) {
     socket.addEventListener("message", (event) => this.notifyListeners(String(event.data)));
@@ -36,9 +39,13 @@ export class DaemonClient implements EventClient {
     this.socket.send(JSON.stringify(request));
   }
 
-  subscribe(listener: ResponseListener): () => void {
+  subscribe(listener: DaemonEventListener): () => void {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);
+  }
+
+  onDisconnect(handler: () => void): void {
+    this.socket.addEventListener("close", handler, { once: true });
   }
 
   close(): void {
@@ -46,7 +53,7 @@ export class DaemonClient implements EventClient {
   }
 
   notifyListeners(data: string): void {
-    const response = responseEventSchema.parse(JSON.parse(data)) as AgentResponseEvent;
-    for (const listener of this.listeners) listener(response);
+    const { event, peer } = daemonMessageSchema.parse(JSON.parse(data));
+    for (const listener of this.listeners) listener(event as DaemonEvent, peer);
   }
 }

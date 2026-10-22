@@ -1,24 +1,12 @@
-import { THEME_NAMES } from "@claudin/events";
+import { listCheckpoints, type Picker, type SessionState, THEME_NAMES } from "@claudin/events";
 import type { AppStore } from "../store/appStore.ts";
+import { guardIdle } from "./agentBusy.ts";
 import { requestAgent } from "./agentRequest.ts";
-import { guardIdle } from "./localCommands.ts";
 
-export function confirmPicker(store: AppStore): void {
-  const { state } = store;
-  const { picker } = state.ui;
-  if (!picker) return;
-  store.emit({ type: "ui.picker.closed" });
-  if (picker.kind === "model") {
-    const model = state.models[picker.selected];
-    if (model) requestAgent(store, { type: "agent.model.set.requested", model: model.value });
-    return;
-  }
-  if (picker.kind === "theme") {
-    const theme = THEME_NAMES[picker.selected];
-    if (theme) store.emit({ type: "ui.theme.selected", theme });
-    return;
-  }
-  const target = state.sessionList[picker.selected];
+type PickerConfirm = (store: AppStore, state: SessionState, selected: number) => void;
+
+function switchSession(store: AppStore, state: SessionState, selected: number): void {
+  const target = state.sessionList[selected];
   if (!target) return;
   if (target.id === state.sessionId) {
     return store.emit({ type: "ui.notice.posted", text: "Already in this session" });
@@ -26,4 +14,31 @@ export function confirmPicker(store: AppStore): void {
   if (guardIdle(store, "switching session")) {
     store.request({ type: "session.restore.requested", sessionId: target.id });
   }
+}
+
+const PICKER_CONFIRMS: Record<Picker["kind"], PickerConfirm> = {
+  model(store, state, selected) {
+    const model = state.models[selected];
+    if (model) requestAgent(store, { type: "agent.model.set.requested", model: model.value });
+  },
+  theme(store, _state, selected) {
+    const theme = THEME_NAMES[selected];
+    if (theme) store.emit({ type: "ui.theme.selected", theme });
+  },
+  rewind(store, state, selected) {
+    const userMessageId = listCheckpoints(state)[selected]?.checkpointId;
+    if (userMessageId && guardIdle(store, "rewinding")) {
+      requestAgent(store, { type: "agent.files.rewind.requested", userMessageId });
+    }
+  },
+  session: switchSession,
+  search: switchSession,
+};
+
+export function confirmPicker(store: AppStore): void {
+  const { state } = store;
+  const { picker } = state.ui;
+  if (!picker) return;
+  store.emit({ type: "ui.picker.closed" });
+  PICKER_CONFIRMS[picker.kind](store, state, picker.selected);
 }

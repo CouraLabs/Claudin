@@ -1,16 +1,8 @@
-import type { ToolCall } from "@claudin/events";
+import { countPatchLines, type ToolCall } from "@claudin/events";
 import { createPatch } from "diff";
+import { detectFiletype } from "./detectFiletype.ts";
 
 export type ToolDiff = { patch: string; additions: number; deletions: number; filetype?: string };
-
-const FILETYPES: Record<string, string> = {
-  ts: "typescript",
-  tsx: "typescript",
-  js: "javascript",
-  jsx: "javascript",
-  mjs: "javascript",
-  md: "markdown",
-};
 
 type Edit = { old_string?: string; new_string?: string };
 
@@ -28,20 +20,15 @@ function readTexts({ name, input }: ToolCall): { before: string; after: string }
   };
 }
 
-const countLines = (patch: string, sign: "+" | "-"): number =>
-  patch.split("\n").filter((line) => line.startsWith(sign) && !line.startsWith(sign.repeat(3)))
-    .length;
-
 export function buildToolDiff(call: ToolCall): ToolDiff | undefined {
   const texts = readTexts(call);
   const path = call.input.file_path;
   if (!texts || typeof path !== "string") return undefined;
   const patch = createPatch(path, texts.before, texts.after, "", "", { context: 2 });
-  const extension = path.split(".").pop() ?? "";
   return {
     patch,
-    additions: countLines(patch, "+"),
-    deletions: countLines(patch, "-"),
-    filetype: FILETYPES[extension],
+    additions: countPatchLines(patch, "+"),
+    deletions: countPatchLines(patch, "-"),
+    filetype: detectFiletype(path),
   };
 }

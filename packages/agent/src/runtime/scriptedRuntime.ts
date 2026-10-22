@@ -86,6 +86,11 @@ export class ScriptedQuery implements AgentQuery {
     return EMPTY_USAGE;
   }
 
+  async rewindFiles(userMessageId: string, options?: { dryRun?: boolean }) {
+    this.calls.push(`rewindFiles:${userMessageId}${options?.dryRun ? ":dry" : ""}`);
+    return { canRewind: true, filesChanged: ["a.ts"], insertions: 1, deletions: 2 };
+  }
+
   close() {
     this.calls.push("close");
     this.output.end();

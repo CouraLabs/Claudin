@@ -1,4 +1,5 @@
 import type { BackgroundColor } from "../models/backgroundColor.ts";
+import type { FileDiff } from "../models/fileDiff.ts";
 import type { ThemeName } from "../models/themeNames.ts";
 
 export type FocusTarget = "input" | "scrollback";
@@ -14,9 +15,13 @@ export type Autocomplete = {
 
 export type BackgroundEditor = { color: BackgroundColor; channel: number };
 
-export type PickerKind = "model" | "session" | "theme";
+export type PickerKind = "model" | "session" | "search" | "theme" | "rewind";
 
 export type Picker = { kind: PickerKind; selected: number };
+
+export type PromptHistory = { index: number; draft: string };
+
+export type DiffViewer = { files: FileDiff[]; selected: number };
 
 export type UiEvent =
   | { type: "ui.focus.changed"; focus: FocusTarget }
@@ -27,6 +32,12 @@ export type UiEvent =
   | { type: "ui.picker.moved"; delta: 1 | -1 }
   | { type: "ui.picker.closed" }
   | { type: "ui.theme.picker.opened" }
+  | { type: "ui.rewind.picker.opened" }
+  | { type: "ui.history.moved"; delta: 1 | -1; draft: string }
+  | { type: "ui.history.searched"; draft: string }
+  | { type: "ui.history.reset" }
+  | { type: "ui.diff.viewer.moved"; delta: 1 | -1 }
+  | { type: "ui.diff.viewer.closed" }
   | { type: "ui.theme.selected"; theme: ThemeName }
   | { type: "ui.background.editor.opened" }
   | { type: "ui.background.editor.closed" }

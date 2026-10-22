@@ -1,7 +1,7 @@
-import { appendEntry } from "./appendEntry.ts";
 import { readPromptText } from "../models/messageText.ts";
 import type { PromptContent } from "../models/sdkValue.ts";
 import type { SessionState } from "../session/sessionState.ts";
+import { appendEntry } from "./appendEntry.ts";
 
 export function reducePrompt(
   state: SessionState,
@@ -15,6 +15,6 @@ export function reducePrompt(
     status: "thinking",
     queuedTurns: isFollowUp ? state.queuedTurns + 1 : state.queuedTurns,
     turnStartedAt: isFollowUp ? (state.turnStartedAt ?? state.now) : state.now,
-    ui: { ...state.ui, autocomplete: null },
+    ui: { ...state.ui, autocomplete: null, history: null },
   };
 }

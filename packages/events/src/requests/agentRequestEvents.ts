@@ -97,4 +97,9 @@ export const agentRequestSchemas = [
   z.object({ type: z.literal("agent.usage.requested"), agentSessionId }),
   z.object({ type: z.literal("agent.rate_limit.requested"), agentSessionId }),
   z.object({ type: z.literal("agent.rate_limit.cached.requested") }),
+  z.object({
+    type: z.literal("agent.files.rewind.requested"),
+    agentSessionId,
+    userMessageId: z.string(),
+  }),
 ] as const;

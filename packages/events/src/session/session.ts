@@ -1,13 +1,19 @@
-import type { AppEvent } from "./appEvent.ts";
-import { EventMachine, type Handler } from "./eventMachine.ts";
 import { reduceTimedEvent } from "../reducers/reduceSessionState.ts";
 import type { ResponseEvent } from "../responses/responseEvents.ts";
+import type { AppEvent } from "./appEvent.ts";
+import { EventMachine, type Handler } from "./eventMachine.ts";
 import { createSessionState, type SessionState } from "./sessionState.ts";
 import type { SessionStore } from "./sessionStore.ts";
 
 type RestoredEvent = Extract<ResponseEvent, { type: "session.restored" }>;
 
-const TRANSIENT_TYPES = new Set(["session.restored", "session.list.received"]);
+const TRANSIENT_TYPES = new Set([
+  "session.restored",
+  "session.forked",
+  "session.synced",
+  "session.list.received",
+  "session.search.received",
+]);
 
 const isTransient = (event: AppEvent): boolean => TRANSIENT_TYPES.has(event.type);
 

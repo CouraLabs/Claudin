@@ -1,12 +1,13 @@
 import type { SDKMessage } from "@anthropic-ai/claude-agent-sdk";
+import type { SessionState } from "../session/sessionState.ts";
 import { appendNotice } from "./appendEntry.ts";
 import { describeSystemMessage } from "./describeSystemMessage.ts";
 import { reduceAssistant } from "./reduceAssistant.ts";
+import { isPromptEcho, reduceCheckpoint } from "./reduceCheckpoint.ts";
 import { reduceRateLimitEvent } from "./reduceRateLimit.ts";
 import { reduceResult } from "./reduceResult.ts";
 import { reduceStreamEvent } from "./reduceStreamEvent.ts";
 import { reduceToolResults } from "./reduceToolResults.ts";
-import type { SessionState } from "../session/sessionState.ts";
 
 export function reduceAgentMessage(state: SessionState, message: SDKMessage): SessionState {
   switch (message.type) {
@@ -25,7 +26,9 @@ export function reduceAgentMessage(state: SessionState, message: SDKMessage): Se
     case "assistant":
       return reduceAssistant(state, message);
     case "user":
-      return reduceToolResults(state, message);
+      return isPromptEcho(message)
+        ? reduceCheckpoint(state, message)
+        : reduceToolResults(state, message);
     case "result":
       return reduceResult(state, message);
     case "rate_limit_event":

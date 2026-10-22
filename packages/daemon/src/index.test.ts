@@ -246,3 +246,26 @@ test("agent sessions are created in the daemon working directory", async () => {
   expect(created).toMatchObject({ type: "agent.session.created" });
   expect(runtime.queries[0]?.options).toMatchObject({ cwd: "/some/dir", model: "m" });
 });
+
+test("rewind requests restore files through the agent session", async () => {
+  const context = await createDaemonContext(
+    new FileSessionStore(await mkdtemp(join(tmpdir(), "claudin-"))),
+  );
+  const runtime = useScriptedAgents(context);
+  context.agents.createSession({ sessionId: "a" });
+  const responses = await collect(context, {
+    type: "agent.files.rewind.requested",
+    agentSessionId: "a",
+    userMessageId: "u1",
+  });
+  expect(responses).toEqual([
+    {
+      type: "agent.files.rewound",
+      userMessageId: "u1",
+      filesChanged: ["a.ts"],
+      insertions: 1,
+      deletions: 2,
+    },
+  ]);
+  expect(runtime.queries[0]?.calls).toEqual(["rewindFiles:u1:dry", "rewindFiles:u1"]);
+});

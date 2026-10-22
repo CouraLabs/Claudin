@@ -4,18 +4,24 @@ import type {
   ModelInfo,
   Options,
   PermissionMode,
+  RewindFilesResult,
   SDKUserMessage,
   SlashCommand,
 } from "@anthropic-ai/claude-agent-sdk";
 import type { ApprovalDecision, PromptContent, ResponseEvent } from "@claudin/events";
 import { type Pushable, pushable } from "it-pushable";
+import { PermissionGate } from "../permissions/permissionGate.ts";
 import { AGENT_PROFILE_OPTIONS } from "../profile/agentProfile.ts";
 import type { AgentQuery, AgentRuntime } from "../runtime/agentRuntime.ts";
 import { buildUserMessage, type PromptPriority } from "../runtime/buildUserMessage.ts";
-import { PermissionGate } from "../permissions/permissionGate.ts";
 import { pickNextModel } from "./pickNextModel.ts";
 
 type TurnEvent = ResponseEvent;
+
+function requireRewind(result: RewindFilesResult): RewindFilesResult {
+  if (!result.canRewind) throw new Error(result.error ?? "Cannot rewind to this checkpoint");
+  return result;
+}
 
 export class AgentSession {
   readonly input = pushable<SDKUserMessage>({ objectMode: true });
@@ -107,6 +113,12 @@ export class AgentSession {
 
   fetchCommands(): Promise<SlashCommand[]> {
     return this.query.supportedCommands();
+  }
+
+  async rewindFiles(userMessageId: string): Promise<RewindFilesResult> {
+    const preview = requireRewind(await this.query.rewindFiles(userMessageId, { dryRun: true }));
+    requireRewind(await this.query.rewindFiles(userMessageId));
+    return preview;
   }
 
   fetchUsage() {

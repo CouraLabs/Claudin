@@ -1,4 +1,4 @@
-import { type SessionState, THEME_NAMES } from "@claudin/events";
+import { listCheckpoints, type SessionState, THEME_NAMES } from "@claudin/events";
 import { buildSlashCatalog } from "../input/slashCatalog.ts";
 import { formatTimeAgo } from "./formatMetrics.ts";
 import { SEPARATOR } from "./glyphs.ts";
@@ -10,6 +10,7 @@ export type ListRow = { name: string; description: string };
 export type ListView = { title?: string; rows: ListRow[]; selected: number };
 
 const SESSION_TITLE_LENGTH = 50;
+const CHECKPOINT_TEXT_LENGTH = 60;
 const SESSION_PATH_LENGTH = 30;
 
 function buildAutocompleteView({ ui, slashCommands }: SessionState): ListView | null {
@@ -40,11 +41,19 @@ function buildPickerView(state: SessionState): ListView | null {
     }));
     return { title: "Select a theme", rows, selected: picker.selected };
   }
+  if (picker.kind === "rewind") {
+    const rows = listCheckpoints(state).map((entry) => ({
+      name: truncateText(entry.text.replace(/\s+/g, " "), CHECKPOINT_TEXT_LENGTH),
+      description: formatTimeAgo(entry.at, Date.now()),
+    }));
+    return { title: "Restore files to before this prompt", rows, selected: picker.selected };
+  }
   const rows = state.sessionList.map((session) => ({
     name: `${truncateText(session.title, SESSION_TITLE_LENGTH)}${session.id === state.sessionId ? " (current)" : ""}`,
     description: `${shortenPath(session.cwd || "?", SESSION_PATH_LENGTH)}${SEPARATOR}${formatTimeAgo(session.updatedAt, Date.now())}`,
   }));
-  return { title: "Switch session", rows, selected: picker.selected };
+  const title = picker.kind === "search" ? "Matching sessions" : "Switch session";
+  return { title, rows, selected: picker.selected };
 }
 
 export const buildListView = (state: SessionState): ListView | null =>

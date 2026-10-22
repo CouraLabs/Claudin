@@ -94,6 +94,17 @@ export const agentHandlers: AgentHandlers = {
     const rateLimit = await readCachedRateLimits();
     if (rateLimit) yield { type: "agent.rate_limit.received", rateLimit };
   },
+  async *"agent.files.rewind.requested"({ agents }, request) {
+    const { userMessageId } = request;
+    const result = await agents.requireSession(request.agentSessionId).rewindFiles(userMessageId);
+    yield {
+      type: "agent.files.rewound",
+      userMessageId,
+      filesChanged: result.filesChanged ?? [],
+      insertions: result.insertions ?? 0,
+      deletions: result.deletions ?? 0,
+    };
+  },
   async *"agent.rate_limit.requested"({ agents }, request) {
     const { rate_limits: rateLimit } = await agents
       .requireSession(request.agentSessionId)
