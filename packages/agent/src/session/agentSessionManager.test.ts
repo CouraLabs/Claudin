@@ -36,6 +36,26 @@ test("a prompt streams the turn until its result", async () => {
   expect(session.pumping).toBe(false);
 });
 
+const tasksChanged = (count: number) =>
+  ({
+    type: "system",
+    subtype: "background_tasks_changed",
+    tasks: Array.from({ length: count }, (_, index) => ({ task_id: `t${index}` })),
+  }) as unknown as SDKMessage;
+
+test("a turn stays open until background tasks finish", async () => {
+  const { session } = createFixture(() => [
+    tasksChanged(1),
+    RESULT_MESSAGE,
+    tasksChanged(0),
+    note("task done"),
+    RESULT_MESSAGE,
+  ]);
+  const events = await collect(session.prompt("go"));
+  expect(noteText(events)).toContain("task done");
+  expect(session.backgroundTaskCount).toBe(0);
+});
+
 test("queue and steer deliver the prompt with their priority", async () => {
   const seen: Array<SDKUserMessage["priority"]> = [];
   const { session } = createFixture((input) => {

@@ -16,6 +16,7 @@ import { PermissionGate } from "../permissions/permissionGate.ts";
 import { AGENT_PROFILE_OPTIONS } from "../profile/agentProfile.ts";
 import type { AgentQuery, AgentRuntime } from "../runtime/agentRuntime.ts";
 import { buildUserMessage, type PromptPriority } from "../runtime/buildUserMessage.ts";
+import { readBackgroundTaskCount } from "./readBackgroundTaskCount.ts";
 
 type TurnEvent = ResponseEvent;
 
@@ -30,6 +31,7 @@ export class AgentSession {
   readonly elicitations: ElicitationGate;
   readonly query: AgentQuery;
   pendingTurns = 0;
+  backgroundTaskCount = 0;
   pumping = false;
 
   constructor(
@@ -169,9 +171,10 @@ export class AgentSession {
         const { done, value } = await this.query.next();
         if (done) break;
         sink.push({ type: "agent.message.received", message: value });
+        this.backgroundTaskCount = readBackgroundTaskCount(value, this.backgroundTaskCount);
         if (value.type !== "result") continue;
         this.pendingTurns = Math.max(this.pendingTurns - 1, 0);
-        if (this.pendingTurns === 0) break;
+        if (this.pendingTurns === 0 && this.backgroundTaskCount === 0) break;
       }
       sink.end();
     } catch (error) {
