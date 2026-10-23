@@ -27,6 +27,7 @@ const PRIVATE_TYPES = new Set<string>([
   "agent.mcp.status.requested",
   "agent.mcp.status.received",
   "agent.mcp.login.requested",
+  "agent.mcp.callback.submitted",
   "agent.mcp.login.started",
   "agent.usage.requested",
   "agent.usage.received",

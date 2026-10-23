@@ -155,3 +155,25 @@ test("an MCP login link with an unsafe scheme is refused", async () => {
   runtime.queries[0]!.loginUrl = "file:///etc/passwd";
   await expect(session.startMcpLogin("docs")).rejects.toThrow("unsafe login link");
 });
+
+test("question answers reach a pending elicitation before the permission gate", async () => {
+  const { runtime, session } = createFixture();
+  const events: ResponseEvent[] = [];
+  session.elicitations.listen((event) => events.push(event));
+  const onElicitation = runtime.queries[0]!.options.onElicitation!;
+  const pending = onElicitation(
+    { serverName: "docs", message: "Sure?", mode: "form" },
+    { signal: new AbortController().signal, requestId: "e1" },
+  );
+  session.answerQuestion("elicitation:e1", { "Sure?": "Accept" });
+  expect(await pending).toEqual({ action: "accept", content: {} });
+});
+
+test("submitting an MCP callback forwards it to the sdk", async () => {
+  const { runtime, session } = createFixture();
+  await session.submitMcpCallback("docs", "http://localhost:1/callback?code=x");
+  expect(runtime.queries[0]?.calls).toContain(
+    "mcpCallback:docs:http://localhost:1/callback?code=x",
+  );
+  await expect(session.submitMcpCallback("docs", "file:///x")).rejects.toThrow("http(s)");
+});

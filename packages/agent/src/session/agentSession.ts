@@ -11,6 +11,7 @@ import type {
 import type { ApprovalDecision, PromptContent, ResponseEvent } from "@claudin/events";
 import { type Pushable, pushable } from "it-pushable";
 import { type WaitForLoginOptions, waitForMcpLogin } from "../mcp/waitForMcpLogin.ts";
+import { ElicitationGate } from "../permissions/elicitationGate.ts";
 import { PermissionGate } from "../permissions/permissionGate.ts";
 import { AGENT_PROFILE_OPTIONS } from "../profile/agentProfile.ts";
 import type { AgentQuery, AgentRuntime } from "../runtime/agentRuntime.ts";
@@ -26,6 +27,7 @@ function requireRewind(result: RewindFilesResult): RewindFilesResult {
 export class AgentSession {
   readonly input = pushable<SDKUserMessage>({ objectMode: true });
   readonly gate: PermissionGate;
+  readonly elicitations: ElicitationGate;
   readonly query: AgentQuery;
   pendingTurns = 0;
   pumping = false;
@@ -36,12 +38,14 @@ export class AgentSession {
     runtime: AgentRuntime,
   ) {
     this.gate = new PermissionGate(agentSessionId);
+    this.elicitations = new ElicitationGate(agentSessionId);
     this.query = runtime.open({
       prompt: this.input,
       options: {
         ...baseOptions,
         ...AGENT_PROFILE_OPTIONS,
         canUseTool: this.gate.canUseTool,
+        onElicitation: this.elicitations.handle,
       },
     });
   }
@@ -60,13 +64,13 @@ export class AgentSession {
     if (this.pumping) return;
     this.pumping = true;
     const sink = pushable<TurnEvent>({ objectMode: true });
-    this.gate.listen((event) => sink.push(event));
+    this.listenGates((event) => sink.push(event));
     this.pumpMessages(sink);
     try {
       yield* sink;
     } finally {
       this.pumping = false;
-      this.gate.listen(() => {});
+      this.listenGates(() => {});
     }
   }
 
@@ -75,11 +79,11 @@ export class AgentSession {
   }
 
   answerQuestion(toolUseId: string, answers: Record<string, string>): void {
-    this.gate.answerQuestion(toolUseId, answers);
+    if (!this.elicitations.answer(toolUseId, answers)) this.gate.answerQuestion(toolUseId, answers);
   }
 
   async cancel(): Promise<void> {
-    this.gate.rejectAll();
+    this.rejectAllPrompts();
     await this.query.interrupt();
   }
 
@@ -112,6 +116,13 @@ export class AgentSession {
     return authUrl;
   }
 
+  async submitMcpCallback(serverName: string, callbackUrl: string): Promise<void> {
+    if (!/^https?:$/.test(new URL(callbackUrl).protocol)) {
+      throw new Error("The callback must be an http(s) link");
+    }
+    await this.query.mcpSubmitOAuthCallbackUrl(serverName, callbackUrl);
+  }
+
   awaitMcpLogin(serverName: string, wait?: WaitForLoginOptions): Promise<McpServerStatus[]> {
     return waitForMcpLogin(() => this.fetchMcpStatus(), serverName, wait);
   }
@@ -137,9 +148,19 @@ export class AgentSession {
   }
 
   close(): void {
-    this.gate.rejectAll();
+    this.rejectAllPrompts();
     this.input.end();
     this.query.close();
+  }
+
+  private listenGates(emit: (event: TurnEvent) => void): void {
+    this.gate.listen(emit);
+    this.elicitations.listen(emit);
+  }
+
+  private rejectAllPrompts(): void {
+    this.gate.rejectAll();
+    this.elicitations.rejectAll();
   }
 
   async pumpMessages(sink: Pushable<TurnEvent>): Promise<void> {

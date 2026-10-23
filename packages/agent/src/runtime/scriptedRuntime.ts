@@ -82,6 +82,11 @@ export class ScriptedQuery implements AgentQuery {
     return { authUrl: this.loginUrl ?? `https://auth.example/${serverName}` };
   }
 
+  async mcpSubmitOAuthCallbackUrl(serverName: string, callbackUrl: string) {
+    this.calls.push(`mcpCallback:${serverName}:${callbackUrl}`);
+    return {};
+  }
+
   async supportedModels() {
     return this.models;
   }

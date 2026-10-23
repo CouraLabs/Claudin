@@ -89,6 +89,12 @@ export const agentRequestSchemas = [
     agentSessionId,
     serverName: z.string(),
   }),
+  z.object({
+    type: z.literal("agent.mcp.callback.submitted"),
+    agentSessionId,
+    serverName: z.string(),
+    callbackUrl: z.string(),
+  }),
   z.object({ type: z.literal("agent.usage.requested"), agentSessionId }),
   z.object({ type: z.literal("agent.rate_limit.requested"), agentSessionId }),
   z.object({ type: z.literal("agent.rate_limit.cached.requested") }),

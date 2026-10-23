@@ -19,7 +19,6 @@
     "@claudin/agent": "workspace:*",
     "@claudin/events": "workspace:*",
     "fuzzysort": "^4.0.2",
-    "open": "^11.0.4",
     "ws": "^8.22.0"
   },
   "devDependencies": {

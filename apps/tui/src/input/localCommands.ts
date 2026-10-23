@@ -13,6 +13,24 @@ const QUIT_COMMAND: SlashCommand = {
   run: (store) => store.emit({ type: "ui.exit.requested" }),
 };
 
+const MCP_USAGE = "Usage: /mcp | /mcp login <name> | /mcp callback <name> <url>";
+
+function runMcpCommand(store: AppStore, argument: string): void {
+  const [action, serverName, callbackUrl] = argument.trim().split(/\s+/);
+  if (!action) return void requestAgent(store, { type: "agent.mcp.status.requested" });
+  if (action === "login" && serverName) {
+    return void requestAgent(store, { type: "agent.mcp.login.requested", serverName });
+  }
+  if (action === "callback" && serverName && callbackUrl) {
+    return void requestAgent(store, {
+      type: "agent.mcp.callback.submitted",
+      serverName,
+      callbackUrl,
+    });
+  }
+  store.emit({ type: "ui.notice.posted", text: MCP_USAGE });
+}
+
 export const SLASH_ALIASES: Record<string, string> = {
   "/exit": "/quit",
   "/q": "/quit",
@@ -90,17 +108,8 @@ export const SLASH_COMMANDS: Record<string, SlashCommand> = {
     },
   },
   "/mcp": {
-    description: "List MCP servers, or sign in with /mcp login <name>",
-    run(store, argument) {
-      const [action, serverName] = argument.trim().split(/\s+/);
-      if (action !== "login") {
-        return void requestAgent(store, { type: "agent.mcp.status.requested" });
-      }
-      if (!serverName) {
-        return store.emit({ type: "ui.notice.posted", text: "Usage: /mcp login <name>" });
-      }
-      requestAgent(store, { type: "agent.mcp.login.requested", serverName });
-    },
+    description: "List MCP servers, sign in with /mcp login <name>, or /mcp callback <name> <url>",
+    run: runMcpCommand,
   },
   "/clear": {
     description: "Start a fresh session",

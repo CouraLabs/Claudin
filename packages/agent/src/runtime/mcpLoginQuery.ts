@@ -8,6 +8,7 @@ export type McpLoginStart = {
 
 export type McpLoginQuery = {
   mcpAuthenticate(serverName: string): Promise<McpLoginStart>;
+  mcpSubmitOAuthCallbackUrl(serverName: string, callbackUrl: string): Promise<unknown>;
 };
 
 export type LoginCapableQuery = Query & McpLoginQuery;

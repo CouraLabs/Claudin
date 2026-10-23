@@ -1,7 +1,7 @@
+import { openBrowser } from "@claudin/agent";
 import type { RequestEvent } from "@claudin/events";
 import { readCachedRateLimits, writeCachedRateLimits } from "../persistence/rateLimitCache.ts";
 import type { RequestHandlers } from "../server/requestHandler.ts";
-import { openBrowser } from "../system/openBrowser.ts";
 
 type AgentHandlers = Pick<RequestHandlers, Extract<RequestEvent["type"], `agent.${string}`>>;
 
@@ -90,6 +90,13 @@ export const agentHandlers: AgentHandlers = {
     yield { type: "agent.mcp.login.started", serverName, authUrl };
     await openBrowser(authUrl);
     const servers = await session.awaitMcpLogin(serverName);
+    yield { type: "agent.mcp.status.received", servers };
+  },
+  async *"agent.mcp.callback.submitted"({ agents }, request) {
+    const { serverName, callbackUrl } = request;
+    const session = agents.requireSession(request.agentSessionId);
+    await session.submitMcpCallback(serverName, callbackUrl);
+    const servers = await session.awaitMcpLogin(serverName, { intervalMs: 500, timeoutMs: 10_000 });
     yield { type: "agent.mcp.status.received", servers };
   },
   async *"agent.usage.requested"({ agents }, request) {
