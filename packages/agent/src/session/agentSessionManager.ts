@@ -26,18 +26,14 @@ export class AgentSessionManager {
 
   createSession(options: Options = {}): string {
     const sessionId = options.sessionId ?? crypto.randomUUID();
-    this.sessions.set(
-      sessionId,
-      new AgentSession(sessionId, { ...options, sessionId }, this.runtime),
-    );
+    this.replaceSession(sessionId, { ...options, sessionId });
     return sessionId;
   }
 
   async resumeSession(sessionId: string, options: Options = {}): Promise<string> {
     if (!(await this.runtime.getInfo(sessionId)))
       return this.createSession({ ...options, sessionId });
-    const resumed = new AgentSession(sessionId, { ...options, resume: sessionId }, this.runtime);
-    this.sessions.set(sessionId, resumed);
+    this.replaceSession(sessionId, { ...options, resume: sessionId });
     return sessionId;
   }
 
@@ -57,6 +53,11 @@ export class AgentSessionManager {
 
   closeAll(): void {
     for (const sessionId of [...this.sessions.keys()]) this.closeSession(sessionId);
+  }
+
+  private replaceSession(sessionId: string, options: Options): void {
+    this.closeSession(sessionId);
+    this.sessions.set(sessionId, new AgentSession(sessionId, options, this.runtime));
   }
 
   requireSession(sessionId: string): AgentSession {

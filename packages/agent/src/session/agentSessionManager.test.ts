@@ -219,3 +219,10 @@ test("submitting an MCP callback forwards it to the sdk", async () => {
   );
   await expect(session.submitMcpCallback("docs", "file:///x")).rejects.toThrow("http(s)");
 });
+
+test("recreating a session id closes the previous live session", () => {
+  const { runtime, manager, id } = createFixture();
+  manager.createSession({ sessionId: id });
+  expect(runtime.queries[0]?.calls).toContain("close");
+  expect(manager.sessions.size).toBe(1);
+});

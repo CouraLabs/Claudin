@@ -17,6 +17,7 @@ type Pending = {
   kind: PromptKind;
   input: Record<string, unknown>;
   settle: (result: PermissionResult) => void;
+  detach: () => void;
 };
 
 type Emit = (event: ResponseEvent) => void;
@@ -96,8 +97,10 @@ export class PermissionGate {
     announcement: ResponseEvent,
   ): Promise<PermissionResult> {
     return new Promise((settle) => {
-      this.pending.set(toolUseId, { kind, input, settle });
-      signal.addEventListener("abort", () => this.dismiss(kind, toolUseId), { once: true });
+      const onAbort = () => this.dismiss(kind, toolUseId);
+      const detach = () => signal.removeEventListener("abort", onAbort);
+      this.pending.set(toolUseId, { kind, input, settle, detach });
+      signal.addEventListener("abort", onAbort, { once: true });
       this.emit(announcement);
     });
   }
@@ -111,6 +114,7 @@ export class PermissionGate {
     const pending = this.pending.get(toolUseId);
     if (pending?.kind !== kind) return undefined;
     this.pending.delete(toolUseId);
+    pending.detach();
     return pending;
   }
 

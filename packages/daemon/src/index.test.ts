@@ -120,6 +120,25 @@ test("model list and command requests reach the agent session", async () => {
   );
 });
 
+test("responses keep landing in the session that issued the request after a swap", async () => {
+  const store = new FileSessionStore(await mkdtemp(join(tmpdir(), "claudin-")));
+  const context = await createDaemonContext(store);
+  useScriptedAgents(context);
+  const issuing = context.session;
+  const stream = handleRequest(context, { type: "agent.session.create.requested", options: {} });
+  await stream.next();
+  const created = await collect(context, { type: "session.create.requested" });
+  await stream.return(undefined);
+
+  expect(context.session.id).not.toBe(issuing.id);
+  expect(created).toEqual([{ type: "session.created", sessionId: context.session.id }]);
+  const types = (await store.read(issuing.id)).map(({ event }) => event.type);
+  expect(types).toContain("agent.session.created");
+  expect((await store.read(context.session.id)).map(({ event }) => event.type)).toEqual([
+    "session.created",
+  ]);
+});
+
 async function collect(
   context: Awaited<ReturnType<typeof createDaemonContext>>,
   request: RequestEvent,

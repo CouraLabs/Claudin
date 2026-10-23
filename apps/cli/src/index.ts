@@ -1,13 +1,22 @@
 #!/usr/bin/env bun
-import { createDaemonContext, DaemonClient, ReplayClient, startDaemon } from "@claudin/daemon";
+import {
+  createAccessToken,
+  createDaemonContext,
+  createRunId,
+  DaemonClient,
+  ReplayClient,
+  startDaemon,
+} from "@claudin/daemon";
 import { startTui } from "@claudin/tui";
 import { Command } from "commander";
 
 const DEFAULT_PORT = "7777";
 
+const runId = createRunId();
+
 const program = new Command().name("claudin").enablePositionalOptions();
 
-type PortOptions = { port: string; session?: string };
+type PortOptions = { port: string; session?: string; token?: string };
 type Renderer = Awaited<ReturnType<typeof startTui>>;
 
 const printResumeHint = (sessionId: string): void => {
@@ -24,14 +33,16 @@ const exitOnDestroy = (renderer: Renderer): void => {
 const openContext = (sessionId?: string) =>
   createDaemonContext(undefined, sessionId).catch((error: Error) => program.error(error.message));
 
-const daemonUrl = (port: string): string => `ws://localhost:${Number(port)}`;
+const daemonUrl = (port: string): string => `ws://127.0.0.1:${Number(port)}`;
 
 program
   .option("-p, --port <port>", "daemon port", DEFAULT_PORT)
   .option("-s, --session <id>", "resume a previous session")
   .action(async (opts: PortOptions) => {
-    const server = await startDaemon(Number(opts.port), await openContext(opts.session));
-    const renderer = await startTui(await DaemonClient.connect(daemonUrl(opts.port)), {
+    const token = createAccessToken();
+    const server = await startDaemon(Number(opts.port), token, await openContext(opts.session));
+    const client = await DaemonClient.connect(daemonUrl(opts.port), { token, runId });
+    const renderer = await startTui(client, {
       resumeSessionId: opts.session,
       onExit: printResumeHint,
     });
@@ -47,9 +58,10 @@ program
   .option("-p, --port <port>", "daemon port", DEFAULT_PORT)
   .option("-s, --session <id>", "serve a previous session")
   .action(async (opts: PortOptions) => {
-    await startDaemon(Number(opts.port), await openContext(opts.session));
+    const token = createAccessToken();
+    await startDaemon(Number(opts.port), token, await openContext(opts.session));
     process.stdout.write(
-      `Daemon on ${daemonUrl(opts.port)}\nAttach with: claudin attach -p ${opts.port}\n`,
+      `Daemon on ${daemonUrl(opts.port)} (run ${runId})\nAttach with: claudin attach -p ${opts.port} --token ${token}\n`,
     );
   });
 
@@ -57,9 +69,14 @@ program
   .command("attach")
   .description("Attach another terminal to a running daemon's live session")
   .option("-p, --port <port>", "daemon port", DEFAULT_PORT)
+  .option("-t, --token <token>", "access token printed by the daemon (or CLAUDIN_TOKEN)")
   .action(async (opts: PortOptions) => {
-    const client = await DaemonClient.connect(daemonUrl(opts.port)).catch((error: Error) =>
-      program.error(error.message),
+    const token =
+      opts.token ??
+      process.env.CLAUDIN_TOKEN ??
+      program.error("An access token is required: pass --token or set CLAUDIN_TOKEN");
+    const client = await DaemonClient.connect(daemonUrl(opts.port), { token, runId }).catch(
+      (error: Error) => program.error(error.message),
     );
     const renderer = await startTui(client, { attach: true, onExit: printResumeHint });
     client.onDisconnect(() => renderer.destroy());

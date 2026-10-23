@@ -36,10 +36,12 @@ This starts the daemon on port `7777` and opens the TUI in the same terminal.
 | `claudin` | Start the daemon and the TUI together |
 | `claudin --session <id>` | Resume a stored session |
 | `claudin daemon` | Run the daemon only, with no UI |
-| `claudin attach` | Attach a TUI to a running daemon's live session |
+| `claudin attach --token <token>` | Attach a TUI to a running daemon's live session (token from `claudin daemon`, or `CLAUDIN_TOKEN`) |
 | `claudin replay <sessionId>` | Replay a stored session, read-only (`--speed <factor>`) |
 
 Options: `-p, --port <port>` sets the daemon port (default `7777`).
+
+The daemon listens on `127.0.0.1` only and rejects browser origins. Every connection must present the daemon's access token and a run id that is generated when each `claudin` process starts. `claudin` on its own handles both for you. `claudin daemon` prints the token that each `claudin attach` needs.
 
 From source, run any command with `bun apps/cli/src/index.ts <command>`. For example: `bun apps/cli/src/index.ts daemon`.
 

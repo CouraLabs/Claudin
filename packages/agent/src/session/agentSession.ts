@@ -71,7 +71,6 @@ export class AgentSession {
     try {
       yield* sink;
     } finally {
-      this.pumping = false;
       this.listenGates(() => {});
     }
   }
@@ -180,9 +179,11 @@ export class AgentSession {
         this.pendingTurns = Math.max(this.pendingTurns - 1, 0);
         if (this.pendingTurns === 0 && this.liveTaskIds.size === 0) break;
       }
+      this.pumping = false;
       sink.end();
     } catch (error) {
       this.pendingTurns = 0;
+      this.pumping = false;
       sink.end(error as Error);
     }
   }

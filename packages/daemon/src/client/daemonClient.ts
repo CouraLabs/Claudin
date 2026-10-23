@@ -4,6 +4,7 @@ import {
   type ResponseEvent,
   type SDKMessage,
 } from "@claudin/events";
+import { appendCredentials, type ConnectionCredentials } from "../auth/connectionCredentials.ts";
 
 export type AgentResponseEvent = ResponseEvent<SDKMessage>;
 
@@ -24,8 +25,8 @@ export class DaemonClient implements EventClient {
     socket.addEventListener("message", (event) => this.notifyListeners(String(event.data)));
   }
 
-  static async connect(url: string): Promise<DaemonClient> {
-    const socket = new WebSocket(url);
+  static async connect(url: string, credentials: ConnectionCredentials): Promise<DaemonClient> {
+    const socket = new WebSocket(appendCredentials(url, credentials));
     await new Promise<void>((resolve, reject) => {
       socket.addEventListener("open", () => resolve(), { once: true });
       socket.addEventListener("error", () => reject(new Error(`Cannot reach ${url}`)), {

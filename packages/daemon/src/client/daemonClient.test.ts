@@ -4,9 +4,12 @@ import { join } from "node:path";
 import { FileSessionStore } from "@claudin/events";
 import { afterEach, expect, test } from "vitest";
 import type { WebSocketServer } from "ws";
+import { createRunId } from "../auth/connectionCredentials.ts";
 import { createDaemonContext } from "../server/daemonContext.ts";
 import { startDaemon } from "../server/startDaemon.ts";
 import { DaemonClient, type DaemonEvent } from "./daemonClient.ts";
+
+const TOKEN = "test-token";
 
 type Received = { type: string; peer: boolean };
 
@@ -20,12 +23,15 @@ afterEach(() => {
 
 async function startServer() {
   const directory = await mkdtemp(join(tmpdir(), "claudin-"));
-  server = await startDaemon(0, await createDaemonContext(new FileSessionStore(directory)));
+  server = await startDaemon(0, TOKEN, await createDaemonContext(new FileSessionStore(directory)));
   return (server.address() as { port: number }).port;
 }
 
 async function connect(port: number) {
-  const client = await DaemonClient.connect(`ws://localhost:${port}`);
+  const client = await DaemonClient.connect(`ws://127.0.0.1:${port}`, {
+    token: TOKEN,
+    runId: createRunId(),
+  });
   clients.push(client);
   const received: Received[] = [];
   client.subscribe((event: DaemonEvent, peer) => received.push({ type: event.type, peer }));
@@ -65,4 +71,24 @@ test("shared events reach attached peers while private ones stay with the origin
       { type: "session.created", peer: false },
     ]),
   );
+});
+
+const rejectionOf = (port: number, query: string) =>
+  new Promise<string>((resolve) => {
+    const socket = new WebSocket(`ws://127.0.0.1:${port}/?${query}`);
+    socket.addEventListener("open", () => resolve("opened"));
+    socket.addEventListener("error", () => resolve("rejected"));
+  });
+
+test("daemon refuses missing or wrong tokens and duplicate run ids", async () => {
+  const port = await startServer();
+  expect(await rejectionOf(port, "runId=a")).toBe("rejected");
+  expect(await rejectionOf(port, `token=wrong&runId=a`)).toBe("rejected");
+  expect(await rejectionOf(port, `token=${TOKEN}`)).toBe("rejected");
+  const first = await DaemonClient.connect(`ws://127.0.0.1:${port}`, {
+    token: TOKEN,
+    runId: "same",
+  });
+  clients.push(first);
+  expect(await rejectionOf(port, `token=${TOKEN}&runId=same`)).toBe("rejected");
 });

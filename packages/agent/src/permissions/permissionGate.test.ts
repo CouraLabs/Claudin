@@ -154,3 +154,21 @@ test("abort and rejectAll dismiss pending questions and approvals", async () => 
   expect(results.map((r) => r?.behavior)).toEqual(["deny", "deny", "deny"]);
   expect(gate.pending.size).toBe(0);
 });
+
+test("answering a prompt removes its abort listener", async () => {
+  const { gate } = createGate();
+  const signal = new AbortController().signal;
+  const removed: string[] = [];
+  const original = signal.removeEventListener.bind(signal);
+  signal.removeEventListener = ((...args: Parameters<typeof original>) => {
+    removed.push(args[0]);
+    return original(...args);
+  }) as typeof original;
+  const result = gate.canUseTool("Bash", { command: "ls" }, {
+    toolUseID: "t1",
+    signal,
+  } as ToolOptions);
+  gate.answerApproval("t1", "approve");
+  await result;
+  expect(removed).toEqual(["abort"]);
+});
