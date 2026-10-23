@@ -19,6 +19,7 @@ export class AppStore {
   );
   readonly peerEvents = new WeakSet<AppEvent>();
   readonly stopListening: () => void;
+  closed = false;
 
   constructor(private client: EventClient) {
     this.stopListening = client.subscribe((event, peer) => this.receive(event, peer));
@@ -39,7 +40,7 @@ export class AppStore {
   }
 
   emit(event: UiEvent): void {
-    this.machine.send(event);
+    if (!this.closed) this.machine.send(event);
   }
 
   subscribe(listener: StateListener): () => void {
@@ -53,6 +54,7 @@ export class AppStore {
   }
 
   close(): void {
+    this.closed = true;
     this.stopListening();
     this.client.close();
   }

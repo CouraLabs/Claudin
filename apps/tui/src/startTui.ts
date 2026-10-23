@@ -9,7 +9,13 @@ import {
   THEME_NAMES,
   type ThemeName,
 } from "@claudin/events";
-import { BoxRenderable, type CliRenderer, createCliRenderer } from "@opentui/core";
+import {
+  BoxRenderable,
+  type CliRenderer,
+  createCliRenderer,
+  createHostClipboard,
+  type HostClipboardService,
+} from "@opentui/core";
 import { BackgroundPanel } from "./components/backgroundPanel.ts";
 import { DiffViewerPanel } from "./components/diffViewerPanel.ts";
 import { HeaderBar } from "./components/headerBar.ts";
@@ -18,10 +24,12 @@ import { PromptInput } from "./components/promptInput.ts";
 import { ScrollbackView } from "./components/scrollbackView.ts";
 import { SessionInfoBar } from "./components/sessionInfoBar.ts";
 import { StatusLine } from "./components/statusLine.ts";
+import { ToastView } from "./components/toastView.ts";
 import { buildListView } from "./format/listViews.ts";
 import { isStatusBusy } from "./input/agentBusy.ts";
 import { attachSession, bootSession, requestRateLimit } from "./input/agentSessionActions.ts";
 import { acceptAutocomplete, syncAutocomplete } from "./input/autocomplete.ts";
+import { copySelection, pasteFromClipboard } from "./input/clipboardActions.ts";
 import {
   answerApproval,
   cancelTurn,
@@ -46,6 +54,7 @@ export type TuiOptions = {
   resumeSessionId?: string;
   attach?: boolean;
   historyPath?: string;
+  clipboard?: HostClipboardService;
   onExit?: (sessionId: string) => void;
 };
 
@@ -61,7 +70,9 @@ export async function startTui(
 ): Promise<CliRenderer> {
   const activeRenderer =
     options.renderer ?? (await createCliRenderer({ exitOnCtrlC: false, useMouse: true }));
+  activeRenderer.setTerminalTitle("Claudin")
   const store = new AppStore(client);
+  const clipboard = options.clipboard ?? createHostClipboard();
   let syntaxStyle = createSyntaxStyle(activeRenderer);
   let appliedTheme: ThemeName = readShownTheme(store.state);
   let appliedBackground = readShownBackground(store.state);
@@ -70,6 +81,7 @@ export async function startTui(
   const infoBar = new SessionInfoBar(activeRenderer);
   const popover = new ListPopover(activeRenderer);
   const backgroundPanel = new BackgroundPanel(activeRenderer);
+  const toastView = new ToastView(activeRenderer);
   const statusLine = new StatusLine(activeRenderer, () => cancelTurn(store));
   const scrollback = new ScrollbackView(activeRenderer, {
     syntaxStyle,
@@ -77,6 +89,7 @@ export async function startTui(
       syntaxStyle,
       onDecision: (decision, id) => answerApproval(store, decision, id),
       onToggle: (callId) => store.emit({ type: "ui.tool.toggled", callId }),
+      onSelectRow: (cursor) => store.emit({ type: "ui.question.cursor.set", cursor }),
     },
   });
 
@@ -123,6 +136,10 @@ export async function startTui(
   ];
   for (const part of parts) root.add(part.renderable);
   activeRenderer.root.add(root);
+  activeRenderer.root.add(toastView.renderable);
+  activeRenderer.on("selection", (selection) => {
+    void copySelection(store, activeRenderer, clipboard, selection);
+  });
   for (const part of [header, statusLine, popover, backgroundPanel, input, infoBar]) {
     part.renderable.onMouseScroll = ({ scroll }) => {
       if (scroll?.direction === "up") scrollback.scrollByLines(-1);
@@ -154,6 +171,7 @@ export async function startTui(
     syncTheme(state);
     header.update(state);
     statusLine.update(state);
+    toastView.update(state);
     infoBar.update(state);
     scrollback.update(state);
     scrollback.renderable.visible = state.ui.diffViewer === null;
@@ -192,6 +210,7 @@ export async function startTui(
       diffViewer,
       editor,
       acceptCompletion: () => acceptAutocomplete(store, input),
+      pasteClipboard: () => void pasteFromClipboard(store, input, clipboard),
       submitInput,
       exit: () => activeRenderer.destroy(),
     };
@@ -215,6 +234,7 @@ export async function startTui(
     clearInterval(rateLimitPoll);
     destroyed = true;
     void historySaver.flush();
+    void clipboard.dispose();
     options.onExit?.(store.state.sessionId);
     store.close();
   });

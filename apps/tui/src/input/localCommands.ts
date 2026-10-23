@@ -4,8 +4,8 @@ import { guardIdle } from "./agentBusy.ts";
 import { requestAgent } from "./agentRequest.ts";
 import { type SlashCommand, WORKFLOW_COMMANDS } from "./workflowCommands.ts";
 
-export function cycleModel(store: AppStore): void {
-  requestAgent(store, { type: "agent.model.cycle.requested" });
+export function openModelPicker(store: AppStore): void {
+  requestAgent(store, { type: "agent.models.requested" });
 }
 
 const QUIT_COMMAND: SlashCommand = {
@@ -38,7 +38,7 @@ export const SLASH_COMMANDS: Record<string, SlashCommand> = {
     description: "Pick a model, or set one with /model <name>",
     run(store, model) {
       if (model) return void requestAgent(store, { type: "agent.model.set.requested", model });
-      requestAgent(store, { type: "agent.models.requested" });
+      openModelPicker(store);
     },
   },
   "/theme": {
@@ -90,9 +90,16 @@ export const SLASH_COMMANDS: Record<string, SlashCommand> = {
     },
   },
   "/mcp": {
-    description: "List MCP servers",
-    run(store) {
-      requestAgent(store, { type: "agent.mcp.status.requested" });
+    description: "List MCP servers, or sign in with /mcp login <name>",
+    run(store, argument) {
+      const [action, serverName] = argument.trim().split(/\s+/);
+      if (action !== "login") {
+        return void requestAgent(store, { type: "agent.mcp.status.requested" });
+      }
+      if (!serverName) {
+        return store.emit({ type: "ui.notice.posted", text: "Usage: /mcp login <name>" });
+      }
+      requestAgent(store, { type: "agent.mcp.login.requested", serverName });
     },
   },
   "/clear": {

@@ -409,7 +409,8 @@ test("receiving models opens the model picker on the current model", () => {
     { type: "agent.model.changed", model: "haiku" },
     { type: "agent.models.received", models },
   ]);
-  expect(opened.ui.picker).toEqual({ kind: "model", selected: 1 });
+  expect(opened.models.map((model) => model.value)).toEqual(["haiku"]);
+  expect(opened.ui.picker).toEqual({ kind: "model", selected: 0 });
   const moved = reduceSessionState(opened, { type: "ui.picker.moved", delta: 1 });
   expect(moved.ui.picker?.selected).toBe(0);
   expect(reduceSessionState(moved, { type: "ui.picker.closed" }).ui.picker).toBeNull();
@@ -487,4 +488,27 @@ test("task progress puts the subagent summary on its running tool call", () => {
     sdk({ type: "system", subtype: "task_progress", tool_use_id: "t1" }),
   ]);
   expect(listToolCalls(state)[0]?.progress).toBe("Analyzing authentication module");
+});
+
+test("mcp status points servers needing auth at the login command", () => {
+  const servers = [
+    { name: "docs", status: "needs-auth" },
+    { name: "git", status: "connected" },
+  ];
+  const state = play([{ type: "agent.mcp.status.received", servers }]);
+  expect(state.transcript).toMatchObject([
+    {
+      kind: "notice",
+      text: expect.stringContaining("docs (needs-auth: sign in with /mcp login docs)"),
+    },
+  ]);
+});
+
+test("mcp login announces the sign-in link", () => {
+  const state = play([
+    { type: "agent.mcp.login.started", serverName: "docs", authUrl: "https://auth.example/docs" },
+  ]);
+  expect(state.transcript).toMatchObject([
+    { kind: "notice", text: expect.stringContaining("https://auth.example/docs") },
+  ]);
 });

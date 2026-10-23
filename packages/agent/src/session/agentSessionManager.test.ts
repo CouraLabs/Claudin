@@ -2,8 +2,8 @@ import type { ModelInfo, SDKMessage, SDKUserMessage } from "@anthropic-ai/claude
 import type { ResponseEvent } from "@claudin/events";
 import { expect, test } from "vitest";
 import { AGENT_PROFILE_OPTIONS } from "../profile/agentProfile.ts";
-import { AgentSessionManager } from "./agentSessionManager.ts";
 import { RESULT_MESSAGE, ScriptedRuntime, type ScriptedTurn } from "../runtime/scriptedRuntime.ts";
+import { AgentSessionManager } from "./agentSessionManager.ts";
 
 const note = (text: string) => ({ type: "system", subtype: "note", text }) as unknown as SDKMessage;
 
@@ -104,22 +104,6 @@ test("settings changes reach the query", async () => {
   ]);
 });
 
-test("cycling the model moves through the supported models and wraps", async () => {
-  const runtime = new ScriptedRuntime();
-  runtime.models = ["haiku", "sonnet"].map((value) => ({ value })) as ModelInfo[];
-  const manager = new AgentSessionManager(runtime);
-  const session = manager.requireSession(manager.createSession({ model: "haiku" }));
-  expect(await session.cycleModel()).toBe("sonnet");
-  expect(await session.cycleModel()).toBe("haiku");
-  expect(runtime.queries[0]?.calls).toEqual(["setModel:sonnet", "setModel:haiku"]);
-});
-
-test("cycling without supported models changes nothing", async () => {
-  const { runtime, session } = createFixture();
-  expect(await session.cycleModel()).toBeUndefined();
-  expect(runtime.queries[0]?.calls).toEqual([]);
-});
-
 test("every session uses the shared profile tools and system prompt", () => {
   const { runtime } = createFixture();
   expect(runtime.queries[0]?.options).toMatchObject(AGENT_PROFILE_OPTIONS);
@@ -152,4 +136,22 @@ test("closing all sessions closes every query", () => {
   manager.closeAll();
   expect(runtime.queries.map((query) => query.calls.at(-1))).toEqual(["close", "close"]);
   expect(manager.sessions.size).toBe(0);
+});
+
+test("starting an MCP login returns the sign-in link from the runtime", async () => {
+  const { runtime, session } = createFixture();
+  expect(await session.startMcpLogin("docs")).toBe("https://auth.example/docs");
+  expect(runtime.queries[0]?.calls).toContain("mcpAuthenticate:docs");
+});
+
+test("MCP login reports an SDK without login support", async () => {
+  const { runtime, session } = createFixture();
+  Object.assign(runtime.queries[0]!, { mcpAuthenticate: undefined });
+  await expect(session.startMcpLogin("docs")).rejects.toThrow("does not support MCP login");
+});
+
+test("an MCP login link with an unsafe scheme is refused", async () => {
+  const { runtime, session } = createFixture();
+  runtime.queries[0]!.loginUrl = "file:///etc/passwd";
+  await expect(session.startMcpLogin("docs")).rejects.toThrow("unsafe login link");
 });

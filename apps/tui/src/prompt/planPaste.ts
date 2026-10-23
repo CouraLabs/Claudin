@@ -25,7 +25,9 @@ function attachPath(path: string, attachments: PasteAttachments): string {
   return attachments.addImage(buildImageBlock(mediaType, readFileSync(path)));
 }
 
-export function planPaste(event: PasteEvent, attachments: PasteAttachments): string | undefined {
+export type PastedContent = Pick<PasteEvent, "bytes" | "metadata">;
+
+export function planPaste(event: PastedContent, attachments: PasteAttachments): string | undefined {
   const mediaType = readImageMediaType(event.metadata?.mimeType);
   if (mediaType) {
     return attachments.addImage(buildImageBlock(mediaType, event.bytes));

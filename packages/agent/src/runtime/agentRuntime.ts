@@ -7,21 +7,24 @@ import {
   query,
   type SDKUserMessage,
 } from "@anthropic-ai/claude-agent-sdk";
+import type { LoginCapableQuery, McpLoginQuery } from "./mcpLoginQuery.ts";
+import { muteShadowedWarning } from "./muteShadowedWarning.ts";
 
-export type AgentQuery = Pick<
-  Query,
-  | "next"
-  | "interrupt"
-  | "setModel"
-  | "setPermissionMode"
-  | "applyFlagSettings"
-  | "mcpServerStatus"
-  | "supportedModels"
-  | "supportedCommands"
-  | "usage_EXPERIMENTAL_MAY_CHANGE_DO_NOT_RELY_ON_THIS_API_YET"
-  | "rewindFiles"
-  | "close"
->;
+export type AgentQuery = McpLoginQuery &
+  Pick<
+    Query,
+    | "next"
+    | "interrupt"
+    | "setModel"
+    | "setPermissionMode"
+    | "applyFlagSettings"
+    | "mcpServerStatus"
+    | "supportedModels"
+    | "supportedCommands"
+    | "usage_EXPERIMENTAL_MAY_CHANGE_DO_NOT_RELY_ON_THIS_API_YET"
+    | "rewindFiles"
+    | "close"
+  >;
 
 export type OpenQueryParams = { prompt: AsyncIterable<SDKUserMessage>; options: Options };
 
@@ -32,8 +35,10 @@ export type AgentRuntime = {
   fork: typeof forkSession;
 };
 
+muteShadowedWarning();
+
 export const sdkRuntime: AgentRuntime = {
-  open: query,
+  open: (params) => query(params) as LoginCapableQuery,
   getInfo: getSessionInfo,
   getMessages: getSessionMessages,
   fork: forkSession,

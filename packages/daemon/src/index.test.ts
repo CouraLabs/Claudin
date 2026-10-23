@@ -128,7 +128,7 @@ test("a daemon context can start from a stored session", async () => {
   await expect(createDaemonContext(store, "missing")).rejects.toThrow("Unknown session");
 });
 
-test("model cycle and command requests reach the agent session", async () => {
+test("model list and command requests reach the agent session", async () => {
   const context = await createDaemonContext(
     new FileSessionStore(await mkdtemp(join(tmpdir(), "claudin-"))),
   );
@@ -136,10 +136,9 @@ test("model cycle and command requests reach the agent session", async () => {
   runtime.models = ["haiku", "sonnet"].map((value) => ({ value })) as ScriptedRuntime["models"];
   context.agents.createSession({ sessionId: "a", model: "haiku" });
 
-  expect(
-    await collect(context, { type: "agent.model.cycle.requested", agentSessionId: "a" }),
-  ).toEqual([{ type: "agent.model.changed", model: "sonnet" }]);
-  expect(runtime.queries[0]?.calls).toEqual(["setModel:sonnet"]);
+  expect(await collect(context, { type: "agent.models.requested", agentSessionId: "a" })).toEqual([
+    { type: "agent.models.received", models: runtime.models },
+  ]);
   expect(await collect(context, { type: "agent.commands.requested", agentSessionId: "a" })).toEqual(
     [{ type: "agent.commands.received", commands: [] }],
   );

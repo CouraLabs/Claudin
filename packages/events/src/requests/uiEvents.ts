@@ -23,6 +23,8 @@ export type PromptHistory = { index: number; draft: string };
 
 export type DiffViewer = { files: FileDiff[]; selected: number };
 
+export type Toast = { id: string; text: string };
+
 export type UiEvent =
   | { type: "ui.focus.changed"; focus: FocusTarget }
   | { type: "ui.focus.cycled"; direction: 1 | -1 }
@@ -45,9 +47,12 @@ export type UiEvent =
   | { type: "ui.background.channel.moved"; delta: 1 | -1 }
   | { type: "ui.background.value.adjusted"; delta: number }
   | { type: "ui.question.moved"; delta: 1 | -1 }
+  | { type: "ui.question.cursor.set"; cursor: number }
   | { type: "ui.question.toggled" }
   | { type: "ui.question.custom.changed"; text: string }
   | { type: "ui.question.recorded"; question: string; answer: string }
   | { type: "ui.exit.requested" }
   | { type: "ui.notice.posted"; text: string }
+  | { type: "ui.toast.posted"; id: string; text: string }
+  | { type: "ui.toast.dismissed"; id: string }
   | { type: "ui.clock.ticked"; now: number };

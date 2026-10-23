@@ -1,8 +1,8 @@
 import { expect, test } from "vitest";
-import type { AppEvent } from "../session/appEvent.ts";
 import { buildDraftAnswer, isCustomRow, isLastQuestion } from "../models/questionDraft.ts";
-import { reduceSessionState } from "./reduceSessionState.ts";
+import type { AppEvent } from "../session/appEvent.ts";
 import { createSessionState } from "../session/sessionState.ts";
+import { reduceSessionState } from "./reduceSessionState.ts";
 import { findQuestionCalls } from "./toolGroups.ts";
 
 const play = (events: unknown[]) =>
@@ -54,6 +54,13 @@ test("single select ignores toggles and the cursor wraps", () => {
     { type: "ui.question.moved", delta: -1 },
   ]);
   expect(state.ui.question).toMatchObject({ picks: [], cursor: 2 });
+});
+
+test("the cursor can be set directly within the rows", () => {
+  const custom = play([required, { type: "ui.question.cursor.set", cursor: 2 }]);
+  expect(isCustomRow(custom.ui.question!)).toBe(true);
+  const outOfRange = play([required, { type: "ui.question.cursor.set", cursor: 9 }]);
+  expect(outOfRange.ui.question).toMatchObject({ cursor: 0 });
 });
 
 test("answering resumes the tool and clears the draft", () => {

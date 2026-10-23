@@ -1,14 +1,16 @@
 import {
   BoxRenderable,
   type CliRenderer,
+  decodePasteBytes,
   type KeyBinding,
   type PasteEvent,
   SyntaxStyle,
+  stripAnsiSequences,
   TextareaRenderable,
   TextRenderable,
 } from "@opentui/core";
 import { PasteAttachments, type PromptDraft } from "../prompt/pasteAttachments.ts";
-import { planPaste } from "../prompt/planPaste.ts";
+import { type PastedContent, planPaste } from "../prompt/planPaste.ts";
 import { Theme } from "../theme/colors.ts";
 
 const MAX_INPUT_LINES = 8;
@@ -92,6 +94,11 @@ export class PromptInput {
     if (placeholder === undefined) return;
     event.preventDefault();
     this.textarea.insertText(placeholder);
+  }
+
+  insertPasted(content: PastedContent): void {
+    const placeholder = planPaste(content, this.attachments);
+    this.textarea.insertText(placeholder ?? stripAnsiSequences(decodePasteBytes(content.bytes)));
   }
 
   clear(): void {

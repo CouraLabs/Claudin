@@ -66,6 +66,11 @@ export const agentResponseSchemas = [
     servers: sdkValue<McpServerStatus[]>(),
   }),
   z.object({
+    type: z.literal("agent.mcp.login.started"),
+    serverName: z.string(),
+    authUrl: z.string(),
+  }),
+  z.object({
     type: z.literal("agent.usage.received"),
     usage: sdkValue<SDKControlGetUsageResponse["session"]>(),
   }),

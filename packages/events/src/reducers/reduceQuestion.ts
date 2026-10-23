@@ -49,6 +49,13 @@ export function moveQuestionCursor(state: SessionState, delta: 1 | -1): SessionS
   return withDraft(state, { ...question, cursor: (question.cursor + delta + size) % size });
 }
 
+export function setQuestionCursor(state: SessionState, cursor: number): SessionState {
+  const { question } = state.ui;
+  const current = question ? readCurrentQuestion(question) : undefined;
+  if (!question || !current || cursor < 0 || cursor > current.options.length) return state;
+  return withDraft(state, { ...question, cursor });
+}
+
 export function toggleQuestionPick(state: SessionState): SessionState {
   const { question } = state.ui;
   const current = question ? readCurrentQuestion(question) : undefined;

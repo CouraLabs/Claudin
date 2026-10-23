@@ -49,6 +49,7 @@ export class StatusLine {
       content: "",
       wrapMode: "none",
       flexShrink: 0,
+      selectable: false,
       onMouseDown: onStop,
     });
     this.renderable.add(this.label);

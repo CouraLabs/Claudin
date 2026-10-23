@@ -28,6 +28,7 @@ export type ToolCallHooks = {
   syntaxStyle: SyntaxStyle;
   onDecision: (decision: ApprovalDecision, toolUseId: string) => void;
   onToggle: (toolUseId: string) => void;
+  onSelectRow: (index: number) => void;
 };
 
 export class ToolCallView {
@@ -60,8 +61,18 @@ export class ToolCallView {
       onMouseOver: () => this.setHovered(true),
       onMouseOut: () => this.setHovered(false),
     });
-    this.title = new TextRenderable(renderer, { content: "", wrapMode: "none", flexShrink: 1 });
-    this.duration = new TextRenderable(renderer, { content: "", flexShrink: 0, marginLeft: 2 });
+    this.title = new TextRenderable(renderer, {
+      content: "",
+      wrapMode: "none",
+      flexShrink: 1,
+      selectable: false,
+    });
+    this.duration = new TextRenderable(renderer, {
+      content: "",
+      flexShrink: 0,
+      marginLeft: 2,
+      selectable: false,
+    });
     header.add(this.title);
     header.add(this.duration);
     this.body = new BoxRenderable(renderer, { flexDirection: "column", paddingLeft: 2 });
@@ -70,7 +81,7 @@ export class ToolCallView {
     this.approval = new ApprovalPanel(renderer, (decision) =>
       hooks.onDecision(decision, this.callId),
     );
-    this.question = new QuestionPanel(renderer);
+    this.question = new QuestionPanel(renderer, (index) => hooks.onSelectRow(index));
     this.body.add(this.command);
     this.body.add(this.output);
     this.renderable.add(header);

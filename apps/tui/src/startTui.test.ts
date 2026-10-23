@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { DaemonEvent, DaemonEventListener, EventClient } from "@claudin/daemon/client";
 import type { RequestEvent } from "@claudin/events";
-import { rgbToHex } from "@opentui/core";
+import { type ClipboardReadResult, type HostClipboardService, rgbToHex } from "@opentui/core";
 import { createTestRenderer } from "@opentui/core/testing";
 import { afterEach, expect, test } from "vitest";
 import { startTui, type TuiOptions } from "./startTui.ts";
@@ -41,6 +41,21 @@ class FakeClient implements EventClient {
       | undefined;
   }
 }
+
+const fakeClipboard = (result: ClipboardReadResult): HostClipboardService => ({
+  maxWriteBytes: 0,
+  read: async () => result,
+  writeText: async () => ({ status: "unsupported" }),
+  clear: async () => ({ status: "unsupported" }),
+  dispose: async () => {},
+});
+
+const clipboardRead = (mimeType: string, bytes: Uint8Array): ClipboardReadResult => ({
+  status: "read",
+  representation: { mimeType, bytes },
+});
+
+const flushAsync = () => new Promise((resolve) => setTimeout(resolve, 20));
 
 type Harness = Awaited<ReturnType<typeof createHarness>>;
 
@@ -761,22 +776,20 @@ test("the clear command resets the transcript", async () => {
   expect(output).not.toContain("remember this");
 });
 
-test("shift+tab asks the agent to cycle the model", async () => {
+test("shift+tab asks the agent for the model list", async () => {
   const harness = await createHarness();
   harness.mockInput.pressTab({ shift: true });
-  expect(harness.client.lastOfType("agent.model.cycle.requested")).toEqual({
-    type: "agent.model.cycle.requested",
+  expect(harness.client.lastOfType("agent.models.requested")).toEqual({
+    type: "agent.models.requested",
     agentSessionId: "a1",
   });
-  harness.client.receive({ type: "agent.model.changed", model: "claude-sonnet-5-5" });
-  expect(await harness.frame()).toContain("Claude Sonnet 5.5 (shift+tab)");
 });
 
-test("shift+tab cycles the model while a turn is running", async () => {
+test("shift+tab opens the model picker while a turn is running", async () => {
   const harness = await createHarness();
   await submit(harness, "work");
   harness.mockInput.pressTab({ shift: true });
-  expect(harness.client.lastOfType("agent.model.cycle.requested")).toBeDefined();
+  expect(harness.client.lastOfType("agent.models.requested")).toBeDefined();
 });
 
 const MODELS = [
@@ -802,11 +815,10 @@ test("/model lists the available models and selecting one switches to it", async
   harness.client.receive({ type: "agent.models.received", models: MODELS });
   const output = await harness.frame();
   expect(output).toContain("Select a model");
-  expect(output).toContain("Default");
+  expect(output).not.toContain("Default");
   expect(output).toContain("Haiku");
   expect(output).toContain("Esc close");
 
-  harness.mockInput.pressArrow("down");
   harness.mockInput.pressEnter();
   expect(harness.client.lastOfType("agent.model.set.requested")).toMatchObject({ model: "haiku" });
   harness.client.receive({ type: "agent.model.changed", model: "haiku" });
@@ -1175,6 +1187,32 @@ test("short pastes are inserted as typed", async () => {
   await harness.mockInput.pasteBracketedText("small");
   harness.mockInput.pressEnter();
   expect(harness.client.lastOfType("agent.prompt.requested")?.content).toBe("small");
+});
+
+test("ctrl+v inserts the clipboard text", async () => {
+  const bytes = new TextEncoder().encode("from clipboard");
+  const clipboard = fakeClipboard(clipboardRead("text/plain", bytes));
+  const harness = await createHarness(100, 32, { clipboard });
+  harness.mockInput.pressKey("v", { ctrl: true });
+  await flushAsync();
+  harness.mockInput.pressEnter();
+  expect(harness.client.lastOfType("agent.prompt.requested")?.content).toBe("from clipboard");
+});
+
+test("ctrl+v attaches a clipboard image", async () => {
+  const clipboard = fakeClipboard(clipboardRead("image/png", new Uint8Array([137, 80, 78, 71])));
+  const harness = await createHarness(100, 32, { clipboard });
+  harness.mockInput.pressKey("v", { ctrl: true });
+  await flushAsync();
+  expect(await harness.frame()).toContain("[Image #1]");
+});
+
+test("ctrl+v with an unreadable clipboard posts a notice", async () => {
+  const clipboard = fakeClipboard({ status: "unsupported" });
+  const harness = await createHarness(100, 32, { clipboard });
+  harness.mockInput.pressKey("v", { ctrl: true });
+  await flushAsync();
+  expect(await harness.frame()).toContain("Clipboard unavailable");
 });
 
 test("the typed prompt is saved to the history file after the debounce", async () => {

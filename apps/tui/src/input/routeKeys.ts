@@ -7,10 +7,11 @@ import { isAgentBusy } from "./agentBusy.ts";
 import { routeAutocompleteKey } from "./autocomplete.ts";
 import { adjustBackground, closeBackgroundEditor, saveBackground } from "./backgroundActions.ts";
 import { type InputEditor, routeHistoryKey, routeHistorySearchKey } from "./historyActions.ts";
-import { cycleModel } from "./localCommands.ts";
+import { openModelPicker } from "./localCommands.ts";
 import { confirmPicker } from "./pickerActions.ts";
 import { answerApproval, cancelTurn, type PromptDelivery } from "./promptActions.ts";
 import { confirmQuestion, dismissQuestion } from "./questionActions.ts";
+import { showToast } from "./toastActions.ts";
 
 export type KeyPresses = { escapeAt: number; ctrlCAt: number };
 
@@ -23,6 +24,7 @@ export type KeyTargets = {
   diffViewer: DiffViewerPanel;
   editor: InputEditor;
   acceptCompletion: () => void;
+  pasteClipboard: () => void;
   submitInput: (delivery: PromptDelivery) => void;
   exit: () => void;
 };
@@ -47,7 +49,7 @@ const routeExit: KeyRoute = (key, { store, presses, exit }) => {
     return true;
   }
   presses.ctrlCAt = pressedAt;
-  store.emit({ type: "ui.notice.posted", text: EXIT_NOTICE });
+  showToast(store, EXIT_NOTICE);
   return true;
 };
 
@@ -75,9 +77,13 @@ const QUESTION_ACTIONS: Record<string, (store: AppStore) => void> = {
   escape: dismissQuestion,
 };
 
+const DELETE_CHARACTER = "\x7f";
+
 const readTypedText = (key: KeyEvent): string | undefined => {
   if (key.ctrl || key.meta) return undefined;
-  return key.sequence.length === 1 && key.sequence >= " " ? key.sequence : undefined;
+  return key.sequence.length === 1 && key.sequence >= " " && key.sequence !== DELETE_CHARACTER
+    ? key.sequence
+    : undefined;
 };
 
 function typeCustomAnswer(key: KeyEvent, store: AppStore): boolean {
@@ -167,9 +173,9 @@ const routePicker: KeyRoute = (key, { store }) => {
   return true;
 };
 
-const routeModelCycle: KeyRoute = (key, { store }) => {
+const routeModelPicker: KeyRoute = (key, { store }) => {
   if (key.name !== "tab" || !key.shift) return false;
-  cycleModel(store);
+  openModelPicker(store);
   return true;
 };
 
@@ -180,6 +186,13 @@ const routeDelivery: KeyRoute = (key, { store, submitInput }) => {
   return true;
 };
 
+const routePaste: KeyRoute = (key, { store, pasteClipboard }) => {
+  if (key.name !== "v" || !(key.ctrl || key.super)) return false;
+  if (store.state.ui.focus !== "input") return false;
+  pasteClipboard();
+  return true;
+};
+
 const ROUTES: KeyRoute[] = [
   routeExit,
   routeApproval,
@@ -187,8 +200,9 @@ const ROUTES: KeyRoute[] = [
   routeDiffViewer,
   routeBackgroundEditor,
   routePicker,
-  routeModelCycle,
+  routeModelPicker,
   routeDelivery,
+  routePaste,
   routeHistorySearch,
   routeCompletion,
   routeDoubleEscape,

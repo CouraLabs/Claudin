@@ -36,6 +36,7 @@ export class ApprovalPanel {
       buttons.add(
         new TextRenderable(renderer, {
           content: new StyledText([bold(fg(color)(label))]),
+          selectable: false,
           onMouseDown: () => onDecision(decision),
         }),
       );

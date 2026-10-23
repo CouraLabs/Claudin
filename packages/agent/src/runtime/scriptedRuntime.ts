@@ -1,4 +1,5 @@
 import type {
+  McpServerStatus,
   ModelInfo,
   Options,
   SDKControlGetUsageResponse,
@@ -38,6 +39,8 @@ const EMPTY_USAGE: SDKControlGetUsageResponse = {
 
 export class ScriptedQuery implements AgentQuery {
   readonly calls: string[] = [];
+  readonly serverStatuses: McpServerStatus[][] = [];
+  loginUrl?: string;
   private output = pushable<SDKMessage>({ objectMode: true });
 
   constructor(
@@ -71,7 +74,12 @@ export class ScriptedQuery implements AgentQuery {
   }
 
   async mcpServerStatus() {
-    return [];
+    return this.serverStatuses.shift() ?? [];
+  }
+
+  async mcpAuthenticate(serverName: string) {
+    this.calls.push(`mcpAuthenticate:${serverName}`);
+    return { authUrl: this.loginUrl ?? `https://auth.example/${serverName}` };
   }
 
   async supportedModels() {

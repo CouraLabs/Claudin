@@ -1,32 +1,15 @@
 import type { Options } from "@anthropic-ai/claude-agent-sdk";
 import { DEFAULT_PERMISSION_MODE } from "@claudin/events";
-import { ADHD_SYSTEM_PROMPT } from "./adhdSystemPrompt.ts";
-
-export const AGENT_TOOLS = [
-  "Bash",
-  "Read",
-  "Grep",
-  "Glob",
-  "WebSearch",
-  "WebFetch",
-  "TaskStop",
-  "Agent",
-  "TaskCreate",
-  "TaskGet",
-  "TaskList",
-  "TaskOutput",
-  "TaskUpdate",
-  "TodoWrite",
-  "AskUserQuestion",
-  "Write",
-  "Edit",
-  "NotebookEdit",
-];
+import { AGENT_SYSTEM_PROMPT } from "./agentSystemPrompt.ts";
+import { AGENT_DISALLOWED_TOOLS, AGENT_TOOLS } from "./agentTools.ts";
+import { AGENT_SUBAGENTS } from "./subagents.ts";
 
 export const AGENT_PROFILE_OPTIONS: Pick<
   Options,
   | "tools"
   | "systemPrompt"
+  | "disallowedTools"
+  | "agents"
   | "enableFileCheckpointing"
   | "extraArgs"
   | "permissionMode"
@@ -39,7 +22,9 @@ export const AGENT_PROFILE_OPTIONS: Pick<
   | "includeHookEvents"
 > = {
   tools: AGENT_TOOLS,
-  systemPrompt: ADHD_SYSTEM_PROMPT,
+  disallowedTools: AGENT_DISALLOWED_TOOLS,
+  systemPrompt: AGENT_SYSTEM_PROMPT,
+  agents: AGENT_SUBAGENTS,
   enableFileCheckpointing: true,
   extraArgs: { "replay-user-messages": null },
   permissionMode: DEFAULT_PERMISSION_MODE,

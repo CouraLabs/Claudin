@@ -16,8 +16,10 @@ import {
   changeQuestionCustom,
   moveQuestionCursor,
   recordQuestionAnswer,
+  setQuestionCursor,
   toggleQuestionPick,
 } from "./reduceQuestion.ts";
+import { dismissToast, postToast } from "./reduceToast.ts";
 import { isToolsEntry } from "./toolGroups.ts";
 import { wrapIndex } from "./wrapIndex.ts";
 
@@ -114,6 +116,8 @@ export function reduceUi(state: SessionState, event: UiEvent): SessionState {
       return adjustBackgroundValue(state, event.delta);
     case "ui.question.moved":
       return moveQuestionCursor(state, event.delta);
+    case "ui.question.cursor.set":
+      return setQuestionCursor(state, event.cursor);
     case "ui.question.toggled":
       return toggleQuestionPick(state);
     case "ui.question.custom.changed":
@@ -124,6 +128,10 @@ export function reduceUi(state: SessionState, event: UiEvent): SessionState {
       return state;
     case "ui.notice.posted":
       return appendNotice(state, event.text);
+    case "ui.toast.posted":
+      return postToast(state, event);
+    case "ui.toast.dismissed":
+      return dismissToast(state, event.id);
     case "ui.clock.ticked":
       return { ...state, now: event.now };
   }

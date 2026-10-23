@@ -11,6 +11,7 @@ import { updateFileMatches } from "./reduceAutocomplete.ts";
 import { applyLoadedBackground, applySavedBackground } from "./reduceBackground.ts";
 import { openDiffViewer } from "./reduceDiffViewer.ts";
 import {
+  describeLoginStarted,
   describeServers,
   reduceEffortChanged,
   reduceModeChanged,
@@ -57,7 +58,8 @@ const syncSession = (state: SessionState, sessionId: string, stored: StoredEvent
     "Attached to the live session",
   );
 
-function openModelPicker(state: SessionState, models: ModelInfo[]): SessionState {
+function openModelPicker(state: SessionState, allModels: ModelInfo[]): SessionState {
+  const models = allModels.filter((model) => model.value !== "default");
   const current = models.findIndex((model) => model.value === state.model);
   const picker = { kind: "model", selected: Math.max(current, 0) } as const;
   return { ...state, models, ui: { ...state.ui, picker } };
@@ -170,6 +172,8 @@ export function reduceSessionState(state: SessionState, event: AppEvent): Sessio
       return reduceModeChanged(state, event.mode);
     case "agent.mcp.status.received":
       return appendNotice(state, describeServers(event.servers));
+    case "agent.mcp.login.started":
+      return appendNotice(state, describeLoginStarted(event.serverName, event.authUrl));
     case "workspace.info.received":
       return { ...state, cwd: event.cwd, gitBranch: event.gitBranch, gitStats: event.gitStats };
     case "options.loaded":

@@ -71,7 +71,6 @@ export const agentRequestSchemas = [
     answers: z.record(z.string(), z.string()),
   }),
   z.object({ type: z.literal("agent.model.set.requested"), agentSessionId, model: z.string() }),
-  z.object({ type: z.literal("agent.model.cycle.requested"), agentSessionId }),
   z.object({
     type: z.literal("agent.permission_mode.set.requested"),
     agentSessionId,
@@ -85,6 +84,11 @@ export const agentRequestSchemas = [
   z.object({ type: z.literal("agent.commands.requested"), agentSessionId }),
   z.object({ type: z.literal("agent.models.requested"), agentSessionId }),
   z.object({ type: z.literal("agent.mcp.status.requested"), agentSessionId }),
+  z.object({
+    type: z.literal("agent.mcp.login.requested"),
+    agentSessionId,
+    serverName: z.string(),
+  }),
   z.object({ type: z.literal("agent.usage.requested"), agentSessionId }),
   z.object({ type: z.literal("agent.rate_limit.requested"), agentSessionId }),
   z.object({ type: z.literal("agent.rate_limit.cached.requested") }),

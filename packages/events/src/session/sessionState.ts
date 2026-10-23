@@ -11,6 +11,7 @@ import type {
   FocusTarget,
   Picker,
   PromptHistory,
+  Toast,
 } from "../requests/uiEvents.ts";
 import type { GitStats } from "../requests/workspaceEvents.ts";
 import type { SessionSummary } from "./sessionSummary.ts";
@@ -32,6 +33,7 @@ export type UiState = {
   question: QuestionDraft | null;
   history: PromptHistory | null;
   diffViewer: DiffViewer | null;
+  toast: Toast | null;
 };
 
 export type SessionState = {
@@ -96,5 +98,6 @@ export const createSessionState = (sessionId: string): SessionState => ({
     question: null,
     history: null,
     diffViewer: null,
+    toast: null,
   },
 });

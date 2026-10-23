@@ -1,6 +1,7 @@
 import type { RequestEvent } from "@claudin/events";
 import { readCachedRateLimits, writeCachedRateLimits } from "../persistence/rateLimitCache.ts";
 import type { RequestHandlers } from "../server/requestHandler.ts";
+import { openBrowser } from "../system/openBrowser.ts";
 
 type AgentHandlers = Pick<RequestHandlers, Extract<RequestEvent["type"], `agent.${string}`>>;
 
@@ -62,10 +63,6 @@ export const agentHandlers: AgentHandlers = {
     await agents.requireSession(request.agentSessionId).setModel(request.model);
     yield { type: "agent.model.changed", model: request.model };
   },
-  async *"agent.model.cycle.requested"({ agents }, request) {
-    const model = await agents.requireSession(request.agentSessionId).cycleModel();
-    if (model) yield { type: "agent.model.changed", model };
-  },
   async *"agent.effort.set.requested"({ agents }, request) {
     await agents.requireSession(request.agentSessionId).setEffort(request.effort);
     yield { type: "agent.effort.changed", effort: request.effort };
@@ -84,6 +81,15 @@ export const agentHandlers: AgentHandlers = {
   },
   async *"agent.mcp.status.requested"({ agents }, request) {
     const servers = await agents.requireSession(request.agentSessionId).fetchMcpStatus();
+    yield { type: "agent.mcp.status.received", servers };
+  },
+  async *"agent.mcp.login.requested"({ agents }, request) {
+    const { serverName } = request;
+    const session = agents.requireSession(request.agentSessionId);
+    const authUrl = await session.startMcpLogin(serverName);
+    yield { type: "agent.mcp.login.started", serverName, authUrl };
+    await openBrowser(authUrl);
+    const servers = await session.awaitMcpLogin(serverName);
     yield { type: "agent.mcp.status.received", servers };
   },
   async *"agent.usage.requested"({ agents }, request) {

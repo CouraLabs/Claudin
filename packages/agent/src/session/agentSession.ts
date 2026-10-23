@@ -10,11 +10,11 @@ import type {
 } from "@anthropic-ai/claude-agent-sdk";
 import type { ApprovalDecision, PromptContent, ResponseEvent } from "@claudin/events";
 import { type Pushable, pushable } from "it-pushable";
+import { type WaitForLoginOptions, waitForMcpLogin } from "../mcp/waitForMcpLogin.ts";
 import { PermissionGate } from "../permissions/permissionGate.ts";
 import { AGENT_PROFILE_OPTIONS } from "../profile/agentProfile.ts";
 import type { AgentQuery, AgentRuntime } from "../runtime/agentRuntime.ts";
 import { buildUserMessage, type PromptPriority } from "../runtime/buildUserMessage.ts";
-import { pickNextModel } from "./pickNextModel.ts";
 
 type TurnEvent = ResponseEvent;
 
@@ -88,12 +88,6 @@ export class AgentSession {
     this.baseOptions = { ...this.baseOptions, model };
   }
 
-  async cycleModel(): Promise<string | undefined> {
-    const next = pickNextModel(await this.fetchModels(), this.baseOptions.model);
-    if (next) await this.setModel(next);
-    return next;
-  }
-
   setPermissionMode(mode: PermissionMode): Promise<void> {
     return this.query.setPermissionMode(mode);
   }
@@ -104,6 +98,22 @@ export class AgentSession {
 
   fetchMcpStatus(): Promise<McpServerStatus[]> {
     return this.query.mcpServerStatus();
+  }
+
+  async startMcpLogin(serverName: string): Promise<string> {
+    if (typeof this.query.mcpAuthenticate !== "function") {
+      throw new Error("This Claude Agent SDK version does not support MCP login");
+    }
+    const { authUrl } = await this.query.mcpAuthenticate(serverName);
+    if (!authUrl) throw new Error(`MCP server ${serverName} did not offer a login`);
+    if (!/^https?:$/.test(new URL(authUrl).protocol)) {
+      throw new Error(`MCP server ${serverName} offered an unsafe login link`);
+    }
+    return authUrl;
+  }
+
+  awaitMcpLogin(serverName: string, wait?: WaitForLoginOptions): Promise<McpServerStatus[]> {
+    return waitForMcpLogin(() => this.fetchMcpStatus(), serverName, wait);
   }
 
   fetchModels(): Promise<ModelInfo[]> {

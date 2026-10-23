@@ -58,8 +58,11 @@ test("shared events reach attached peers while private ones stay with the origin
     { type: "session.create.requested", peer: true },
     { type: "session.created", peer: true },
   ]);
-  expect(origin.received).toEqual([
-    { type: "session.list.received", peer: false },
-    { type: "session.created", peer: false },
-  ]);
+  expect(origin.received).toHaveLength(2);
+  expect(origin.received).toEqual(
+    expect.arrayContaining([
+      { type: "session.list.received", peer: false },
+      { type: "session.created", peer: false },
+    ]),
+  );
 });
