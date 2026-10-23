@@ -35,16 +35,6 @@ export const agentHandlers: AgentHandlers = {
   async *"agent.prompt.requested"({ agents }, request) {
     yield* agents.requireSession(request.agentSessionId).prompt(request.content);
   },
-  async *"agent.prompt.queue.requested"({ agents }, request) {
-    const turn = agents.requireSession(request.agentSessionId).prompt(request.content, "later");
-    yield { type: "agent.prompt.accepted", agentSessionId: request.agentSessionId };
-    yield* turn;
-  },
-  async *"agent.prompt.steer.requested"({ agents }, request) {
-    const turn = agents.requireSession(request.agentSessionId).prompt(request.content, "now");
-    yield { type: "agent.prompt.accepted", agentSessionId: request.agentSessionId };
-    yield* turn;
-  },
   async *"agent.prompt.cancel.requested"({ agents }, request) {
     await agents.requireSession(request.agentSessionId).cancel();
     yield { type: "agent.prompt.cancelled", agentSessionId: request.agentSessionId };

@@ -31,7 +31,7 @@ export type KeyTargets = {
 
 type KeyRoute = (key: KeyEvent, targets: KeyTargets) => boolean;
 
-const DELIVERY_KEYS: Record<string, PromptDelivery> = { q: "queue", w: "steer" };
+const DELIVERY_KEYS: Record<string, PromptDelivery> = { q: "queue" };
 
 const DOUBLE_ESCAPE_MS = 500;
 

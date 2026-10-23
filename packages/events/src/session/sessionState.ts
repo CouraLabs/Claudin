@@ -58,6 +58,7 @@ export type SessionState = {
   models: ModelInfo[];
   sessionList: SessionSummary[];
   queuedTurns: number;
+  queuedPrompts: PromptContent[];
   tasks: RunningTask[];
   transcript: TranscriptEntry[];
   entryCounter: number;
@@ -89,6 +90,7 @@ export const createSessionState = (sessionId: string): SessionState => ({
   models: [],
   sessionList: [],
   queuedTurns: 0,
+  queuedPrompts: [],
   tasks: [],
   transcript: [],
   entryCounter: 0,

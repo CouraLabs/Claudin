@@ -1,4 +1,10 @@
-import { listCheckpoints, type SessionState, THEME_NAMES } from "@claudin/events";
+import {
+  DEFAULT_EFFORT,
+  effortLevelSchema,
+  listCheckpoints,
+  type SessionState,
+  THEME_NAMES,
+} from "@claudin/events";
 import { buildSlashCatalog } from "../input/slashCatalog.ts";
 import { formatTimeAgo } from "./formatMetrics.ts";
 import { SEPARATOR } from "./glyphs.ts";
@@ -40,6 +46,14 @@ function buildPickerView(state: SessionState): ListView | null {
       description: "",
     }));
     return { title: "Select a theme", rows, selected: picker.selected };
+  }
+  if (picker.kind === "effort") {
+    const current = state.effort || DEFAULT_EFFORT;
+    const rows = effortLevelSchema.options.map((level) => ({
+      name: `${level === current ? "● " : "  "}${level}`,
+      description: "",
+    }));
+    return { title: "Select an effort level", rows, selected: picker.selected };
   }
   if (picker.kind === "rewind") {
     const rows = listCheckpoints(state).map((entry) => ({

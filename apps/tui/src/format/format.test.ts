@@ -1,4 +1,4 @@
-import type { ToolCall } from "@claudin/events";
+import { BATCH_EDIT_TOOL_NAME, stripCustomPrefix, type ToolCall } from "@claudin/events";
 import { expect, test } from "vitest";
 import { buildGauge, formatDuration, formatTimeUntil, formatTokenCount } from "./formatMetrics.ts";
 import { buildToolDiff } from "./toolDiff.ts";
@@ -74,4 +74,13 @@ test("formats the time until a rate limit resets", () => {
   expect(formatTimeUntil(134 * minute, 0)).toBe("2h14m");
   expect(formatTimeUntil((3 * 24 * 60 + 4 * 60) * minute, 0)).toBe("3d4h");
   expect(formatTimeUntil(0, 5 * minute)).toBe("just now");
+});
+
+test("summarizes and describes a batch edit call", () => {
+  const batch = call(BATCH_EDIT_TOOL_NAME, {
+    edits: [{ file_path: "/a.ts" }, { file_path: "/a.ts" }, { file_path: "/b.ts" }],
+  });
+  expect(summarizeToolCall(batch)).toBe("3 edits in 2 files");
+  expect(describeApproval(batch)).toBe("Apply 3 edits in 2 files with BatchEdit?");
+  expect(stripCustomPrefix(BATCH_EDIT_TOOL_NAME)).toBe("BatchEdit");
 });

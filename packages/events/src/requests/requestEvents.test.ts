@@ -7,7 +7,7 @@ test("parses agent and session requests", () => {
   );
   expect(
     requestEventSchema.parse({
-      type: "agent.prompt.steer.requested",
+      type: "agent.prompt.requested",
       agentSessionId: "a",
       content: "hi",
     }),

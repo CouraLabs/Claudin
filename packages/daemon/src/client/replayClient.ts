@@ -4,11 +4,7 @@ import type { DaemonEvent, DaemonEventListener, EventClient } from "./daemonClie
 
 const MAX_GAP_MS = 1500;
 const READ_ONLY_REASON = "Replay is read-only";
-const PROMPT_TYPES = new Set([
-  "agent.prompt.requested",
-  "agent.prompt.queue.requested",
-  "agent.prompt.steer.requested",
-]);
+const PROMPT_TYPES = new Set(["agent.prompt.requested"]);
 
 export class ReplayClient implements EventClient {
   readonly listeners = new Set<DaemonEventListener>();

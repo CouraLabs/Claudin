@@ -28,7 +28,6 @@ export const agentResponseSchemas = [
   }),
   z.object({ type: z.literal("agent.session.created"), agentSessionId }),
   z.object({ type: z.literal("agent.message.received"), message: z.unknown() }),
-  z.object({ type: z.literal("agent.prompt.accepted"), agentSessionId }),
   z.object({ type: z.literal("agent.prompt.cancelled"), agentSessionId }),
   z.object({
     type: z.literal("agent.tool.approval.required"),

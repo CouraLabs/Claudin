@@ -1,4 +1,9 @@
-import type { ApprovalDecision, QuestionDraft, ToolCall } from "@claudin/events";
+import {
+  type ApprovalDecision,
+  type QuestionDraft,
+  stripCustomPrefix,
+  type ToolCall,
+} from "@claudin/events";
 import {
   BoxRenderable,
   bold,
@@ -133,7 +138,7 @@ export class ToolCallView {
     const accent = this.hovered ? Theme.accent.brand : undefined;
     this.title.content = new StyledText([
       fg(accent ?? toolColor(call.status))(glyph),
-      bold(fg(accent ?? Theme.fg.primary)(call.name)),
+      bold(fg(accent ?? Theme.fg.primary)(stripCustomPrefix(call.name))),
       fg(Theme.fg.secondary)(` ${summarizeToolCall(call)}`),
       fg(Theme.fg.muted)(stats),
     ]);

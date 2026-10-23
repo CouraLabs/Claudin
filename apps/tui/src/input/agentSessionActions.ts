@@ -1,8 +1,7 @@
-import type { PermissionMode } from "@claudin/events";
+import { DEFAULT_EFFORT, type PermissionMode } from "@claudin/events";
 import type { AppStore } from "../store/appStore.ts";
 import { requestAgent } from "./agentRequest.ts";
 
-export const DEFAULT_EFFORT = "high";
 export const DEFAULT_MODEL = "claude-haiku-5-5";
 
 const buildSessionOptions = (store: AppStore) => ({

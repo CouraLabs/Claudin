@@ -1,6 +1,6 @@
 import type { BackgroundColor } from "../models/backgroundColor.ts";
 import type { FileDiff } from "../models/fileDiff.ts";
-import type { ThemeName } from "../models/themeNames.ts";
+import type { PromptContent } from "../models/sdkValue.ts";
 
 export type FocusTarget = "input" | "scrollback";
 
@@ -15,7 +15,7 @@ export type Autocomplete = {
 
 export type BackgroundEditor = { color: BackgroundColor; channel: number };
 
-export type PickerKind = "model" | "session" | "search" | "theme" | "rewind";
+export type PickerKind = "model" | "session" | "search" | "theme" | "effort" | "rewind";
 
 export type Picker = { kind: PickerKind; selected: number };
 
@@ -34,6 +34,7 @@ export type UiEvent =
   | { type: "ui.picker.moved"; delta: 1 | -1 }
   | { type: "ui.picker.closed" }
   | { type: "ui.theme.picker.opened" }
+  | { type: "ui.effort.picker.opened" }
   | { type: "ui.rewind.picker.opened" }
   | { type: "ui.history.moved"; delta: 1 | -1; draft: string }
   | { type: "ui.history.searched"; draft: string }
@@ -41,7 +42,8 @@ export type UiEvent =
   | { type: "ui.history.reset" }
   | { type: "ui.diff.viewer.moved"; delta: 1 | -1 }
   | { type: "ui.diff.viewer.closed" }
-  | { type: "ui.theme.selected"; theme: ThemeName }
+  | { type: "ui.prompt.queued"; content: PromptContent }
+  | { type: "ui.prompt.dequeued" }
   | { type: "ui.background.editor.opened" }
   | { type: "ui.background.editor.closed" }
   | { type: "ui.background.channel.moved"; delta: 1 | -1 }

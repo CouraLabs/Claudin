@@ -4,6 +4,7 @@ import { expect, test } from "vitest";
 import { applyTheme, Theme } from "./colors.ts";
 import { buildPalette } from "./palette.ts";
 import { resolveThemeColors } from "./resolveTheme.ts";
+import { buildSyntaxRules } from "./syntaxRules.ts";
 import { resolveNamedTheme } from "./themeCatalog.ts";
 
 test("every theme in the catalog builds a complete palette", () => {
@@ -42,4 +43,22 @@ test("rejects circular color references", () => {
   expect(() => resolveThemeColors({ theme: { a: "b", b: "a" } }, "dark")).toThrow(
     "Circular color reference",
   );
+});
+
+test("palette exposes the theme syntax and markdown colors", () => {
+  const colors = resolveNamedTheme("dracula");
+  const palette = buildPalette(colors);
+  expect(palette.syntax.keyword).toBe(rgbToHex(colors.syntaxKeyword!));
+  expect(palette.markdown.heading).toBe(rgbToHex(colors.markdownHeading!));
+  expect(palette.diff.addedText).toBe(rgbToHex(colors.diffAdded!));
+});
+
+test("syntax rules follow the theme token colors", () => {
+  const palette = buildPalette(resolveNamedTheme("dracula"));
+  const rules = buildSyntaxRules(palette);
+  const colorOf = (scope: string) =>
+    rules.find((entry) => entry.scope.includes(scope))?.style.foreground;
+  expect(colorOf("keyword")).toBe(palette.syntax.keyword);
+  expect(colorOf("string")).toBe(palette.syntax.string);
+  expect(colorOf("markup.heading")).toBe(palette.markdown.heading);
 });

@@ -49,6 +49,7 @@ export class TaskRowView {
     this.title.content = new StyledText([
       fg(Theme.status.success)(`${frame} `),
       bold(fg(Theme.fg.primary)(row.kind)),
+      fg(Theme.fg.muted)(row.model ? ` (${row.model})` : ""),
       fg(Theme.fg.secondary)(` ${row.title}`),
     ]);
     this.stop.content = new StyledText([

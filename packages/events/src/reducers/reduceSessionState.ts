@@ -21,6 +21,7 @@ import { reducePrompt } from "./reducePrompt.ts";
 import { reduceQuestionRequired, reduceQuestionResolved } from "./reduceQuestion.ts";
 import { reduceRateLimit } from "./reduceRateLimit.ts";
 import { stopStreaming } from "./reduceResult.ts";
+import { applyLoadedTheme, applySavedTheme } from "./reduceTheme.ts";
 import { reduceUi } from "./reduceUi.ts";
 import { settleOpenCalls } from "./toolGroups.ts";
 
@@ -87,9 +88,6 @@ export const reduceTimedEvent = (state: SessionState, event: AppEvent, at: numbe
 export function reduceSessionState(state: SessionState, event: AppEvent): SessionState {
   switch (event.type) {
     case "agent.prompt.requested":
-      return reducePrompt(state, event.content, false);
-    case "agent.prompt.queue.requested":
-    case "agent.prompt.steer.requested":
       return reducePrompt(state, event.content, state.status !== "idle");
     case "agent.message.received":
       return reduceAgentMessage(state, event.message as SDKMessage);
@@ -177,9 +175,11 @@ export function reduceSessionState(state: SessionState, event: AppEvent): Sessio
     case "workspace.info.received":
       return { ...state, cwd: event.cwd, gitBranch: event.gitBranch, gitStats: event.gitStats };
     case "options.loaded":
-      return applyLoadedBackground(state, event.background);
+      return applyLoadedTheme(applyLoadedBackground(state, event.background), event.theme);
     case "options.background.saved":
       return applySavedBackground(state, event.color);
+    case "options.theme.saved":
+      return applySavedTheme(state, event.theme);
     case "workspace.files.received":
       return updateFileMatches(state, event.query, event.matches);
     default:

@@ -1,3 +1,4 @@
+import { BATCH_EDIT_TOOL_NAME, CUSTOM_SERVER_NAME } from "@claudin/events";
 import { expect, test } from "vitest";
 import { AGENT_PROFILE_OPTIONS } from "./agentProfile.ts";
 import { AGENT_TOOLS } from "./agentTools.ts";
@@ -13,7 +14,6 @@ test("the profile exposes the full tool list", () => {
       "AskUserQuestion",
       "Write",
       "Edit",
-      "NotebookEdit",
     ]),
   );
 });
@@ -68,4 +68,15 @@ test("the profile streams partial messages, hook events and subagent summaries",
   expect(AGENT_PROFILE_OPTIONS.includePartialMessages).toBe(true);
   expect(AGENT_PROFILE_OPTIONS.includeHookEvents).toBe(true);
   expect(AGENT_PROFILE_OPTIONS.agentProgressSummaries).toBe(true);
+});
+
+test("the profile registers BatchEdit through the custom MCP server", () => {
+  expect(Object.keys(AGENT_PROFILE_OPTIONS.mcpServers ?? {})).toEqual([CUSTOM_SERVER_NAME]);
+  expect(AGENT_PROFILE_OPTIONS.systemPrompt).toContain(
+    `- Use *${BATCH_EDIT_TOOL_NAME}* instead of`,
+  );
+});
+
+test("the profile aliases the short BatchEdit name to the MCP tool", () => {
+  expect(AGENT_PROFILE_OPTIONS.toolAliases).toEqual({ BatchEdit: BATCH_EDIT_TOOL_NAME });
 });

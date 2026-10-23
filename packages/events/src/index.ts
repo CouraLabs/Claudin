@@ -1,6 +1,7 @@
 export * from "./models/approvalDecision.ts";
 export * from "./models/askedQuestion.ts";
 export * from "./models/backgroundColor.ts";
+export * from "./models/customTools.ts";
 export * from "./models/fileDiff.ts";
 export * from "./models/formatModelName.ts";
 export * from "./models/messageText.ts";

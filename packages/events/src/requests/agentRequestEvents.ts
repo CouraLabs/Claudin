@@ -13,6 +13,8 @@ const agentOptions = sdkValue<Options>().optional();
 
 export const effortLevelSchema = z.enum(["low", "medium", "high", "xhigh", "max"]);
 
+export const DEFAULT_EFFORT = "high";
+
 export const permissionModeSchema = z.enum(["auto", "acceptEdits", "bypassPermissions", "dontAsk"]);
 
 export type PermissionMode = z.infer<typeof permissionModeSchema>;
@@ -55,8 +57,6 @@ export const agentRequestSchemas = [
     options: agentOptions,
   }),
   z.object({ type: z.literal("agent.prompt.requested"), agentSessionId, content }),
-  z.object({ type: z.literal("agent.prompt.queue.requested"), agentSessionId, content }),
-  z.object({ type: z.literal("agent.prompt.steer.requested"), agentSessionId, content }),
   z.object({ type: z.literal("agent.prompt.cancel.requested"), agentSessionId }),
   z.object({ type: z.literal("agent.task.stop.requested"), agentSessionId, taskId: z.string() }),
   z.object({

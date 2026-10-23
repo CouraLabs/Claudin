@@ -1,5 +1,10 @@
 import type { Options } from "@anthropic-ai/claude-agent-sdk";
-import { DEFAULT_PERMISSION_MODE } from "@claudin/events";
+import {
+  BATCH_EDIT_BASE_NAME,
+  BATCH_EDIT_TOOL_NAME,
+  DEFAULT_PERMISSION_MODE,
+} from "@claudin/events";
+import { CUSTOM_MCP_SERVERS } from "../tools/customToolsServer.ts";
 import { AGENT_SYSTEM_PROMPT } from "./agentSystemPrompt.ts";
 import { AGENT_DISALLOWED_TOOLS, AGENT_TOOLS } from "./agentTools.ts";
 import { AGENT_SUBAGENTS } from "./subagents.ts";
@@ -7,6 +12,8 @@ import { AGENT_SUBAGENTS } from "./subagents.ts";
 export const AGENT_PROFILE_OPTIONS: Pick<
   Options,
   | "tools"
+  | "mcpServers"
+  | "toolAliases"
   | "systemPrompt"
   | "disallowedTools"
   | "agents"
@@ -22,6 +29,8 @@ export const AGENT_PROFILE_OPTIONS: Pick<
   | "includeHookEvents"
 > = {
   tools: AGENT_TOOLS,
+  mcpServers: CUSTOM_MCP_SERVERS,
+  toolAliases: { [BATCH_EDIT_BASE_NAME]: BATCH_EDIT_TOOL_NAME },
   disallowedTools: AGENT_DISALLOWED_TOOLS,
   systemPrompt: AGENT_SYSTEM_PROMPT,
   agents: AGENT_SUBAGENTS,

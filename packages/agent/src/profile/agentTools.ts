@@ -15,8 +15,7 @@ export const AGENT_TOOLS = [
   "TodoWrite",
   "AskUserQuestion",
   "Write",
-  "Edit",
-  "NotebookEdit",
+  "Edit"
 ];
 
 export const AGENT_DISALLOWED_TOOLS = [

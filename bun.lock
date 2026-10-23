@@ -43,6 +43,7 @@
         "@claudin/events": "workspace:*",
         "it-pushable": "^3.2.4",
         "open": "^11.0.4",
+        "zod": "^4.6.7",
       },
     },
     "packages/daemon": {

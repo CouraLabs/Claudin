@@ -75,8 +75,8 @@ Type these in the TUI prompt.
 ## Keys
 
 - `Shift+Tab`: open the model picker
-- `Ctrl+Q`: queue a prompt while the agent is busy
-- `Ctrl+W`: steer the running turn with a prompt
+- `Enter` while the agent is busy: steer the running turn with the prompt
+- `Ctrl+Q`: queue a prompt while the agent is busy; queued prompts send one per idle turn
 - `Esc` twice: interrupt a busy turn
 - `Shift+Up` / `Shift+Down`: recall earlier prompts for this directory
 - `Ctrl+R`: search prompt history

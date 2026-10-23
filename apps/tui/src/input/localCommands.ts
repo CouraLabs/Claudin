@@ -2,6 +2,7 @@ import { effortLevelSchema, permissionModeSchema, themeNameSchema } from "@claud
 import type { AppStore } from "../store/appStore.ts";
 import { guardIdle } from "./agentBusy.ts";
 import { requestAgent } from "./agentRequest.ts";
+import { saveTheme } from "./themeActions.ts";
 import { type SlashCommand, WORKFLOW_COMMANDS } from "./workflowCommands.ts";
 
 export function openModelPicker(store: AppStore): void {
@@ -64,7 +65,7 @@ export const SLASH_COMMANDS: Record<string, SlashCommand> = {
     run(store, argument) {
       if (!argument) return store.emit({ type: "ui.theme.picker.opened" });
       const parsed = themeNameSchema.safeParse(argument);
-      if (parsed.success) return store.emit({ type: "ui.theme.selected", theme: parsed.data });
+      if (parsed.success) return saveTheme(store, parsed.data);
       store.emit({ type: "ui.notice.posted", text: `Unknown theme: ${argument}` });
     },
   },
@@ -93,8 +94,9 @@ export const SLASH_COMMANDS: Record<string, SlashCommand> = {
     },
   },
   "/effort": {
-    description: "Show or set reasoning effort",
+    description: "Pick a reasoning effort, or set one with /effort <level>",
     run(store, level) {
+      if (!level) return store.emit({ type: "ui.effort.picker.opened" });
       const parsed = effortLevelSchema.safeParse(level);
       if (parsed.success) {
         return void requestAgent(store, {

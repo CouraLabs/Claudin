@@ -196,27 +196,16 @@ test("tool calls are timed from start until they settle", () => {
   expect(listToolCalls(done)[0]?.endedAt).toBeGreaterThanOrEqual(started?.startedAt ?? 0);
 });
 
-test("queued and steered prompts keep the turn going through the next result", () => {
+test("a prompt sent during a turn steers it and keeps the turn going through the next result", () => {
   const result = sdk({ type: "result", subtype: "success", is_error: false });
-  const queued = play([
-    prompt,
-    { type: "agent.prompt.queue.requested", agentSessionId: "a", content: "next" },
-  ]);
-  expect(queued.queuedTurns).toBe(1);
-  const afterFirst = reduceSessionState(queued, result as AppEvent);
-  expect(afterFirst).toMatchObject({ status: "thinking", queuedTurns: 0 });
-  expect(reduceSessionState(afterFirst, result as AppEvent).status).toBe("idle");
-
   const steered = play([
     prompt,
-    { type: "agent.prompt.steer.requested", agentSessionId: "a", content: "now" },
+    { type: "agent.prompt.requested", agentSessionId: "a", content: "now" },
   ]);
   expect(steered.queuedTurns).toBe(1);
-});
-
-test("queueing while idle behaves like a normal prompt", () => {
-  const state = play([{ type: "agent.prompt.queue.requested", agentSessionId: "a", content: "x" }]);
-  expect(state.queuedTurns).toBe(0);
+  const afterFirst = reduceSessionState(steered, result as AppEvent);
+  expect(afterFirst).toMatchObject({ status: "thinking", queuedTurns: 0 });
+  expect(reduceSessionState(afterFirst, result as AppEvent).status).toBe("idle");
 });
 
 test("model notices use the readable model name", () => {

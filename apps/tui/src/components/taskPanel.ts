@@ -28,6 +28,8 @@ export class TaskPanel {
       flexShrink: 0,
       paddingLeft: 2,
       paddingRight: 2,
+      border: ["top"],
+      borderColor: Theme.border.subtle,
       visible: false,
     });
     this.header = new TextRenderable(renderer, { content: "", wrapMode: "none" });
@@ -42,7 +44,7 @@ export class TaskPanel {
     this.renderable.visible = tasks.length > 0;
     if (tasks.length === 0) return;
     const rows = buildTaskRows(tasks, now);
-    this.header.content = new StyledText([bold(fg(Theme.fg.secondary)(buildTaskHeader(tasks)))]);
+    this.header.content = new StyledText([bold(fg(Theme.fg.primary)(buildTaskHeader(tasks)))]);
     this.rows.forEach((view, index) => view.update(rows[index], now));
     const hidden = countHiddenTasks(tasks);
     this.overflow.content = hidden

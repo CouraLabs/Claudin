@@ -5,15 +5,7 @@ import { isAgentBusy } from "./agentBusy.ts";
 import { requestAgent } from "./agentRequest.ts";
 import { isAgentCommand, runSlashCommand } from "./slashCommands.ts";
 
-export type PromptDelivery = "send" | "queue" | "steer";
-
-const DELIVERY_REQUESTS = {
-  send: "agent.prompt.requested",
-  queue: "agent.prompt.queue.requested",
-  steer: "agent.prompt.steer.requested",
-} as const;
-
-const BUSY_NOTICE = "Agent is busy: Ctrl+Q queues, Ctrl+W steers, Esc Esc interrupts the turn";
+export type PromptDelivery = "send" | "queue";
 
 const buildContent = (text: string, images: ImageBlock[]) =>
   images.length > 0 ? [{ type: "text" as const, text }, ...images] : text;
@@ -24,15 +16,19 @@ function deliverPrompt(
   delivery: PromptDelivery,
   images: ImageBlock[],
 ): boolean {
-  const busy = isAgentBusy(store);
-  if (busy && delivery === "send") {
-    store.emit({ type: "ui.notice.posted", text: BUSY_NOTICE });
-    return false;
+  const body = buildContent(content, images);
+  if (delivery === "queue" && isAgentBusy(store)) {
+    store.emit({ type: "ui.prompt.queued", content: body });
+    return true;
   }
-  return requestAgent(store, {
-    type: DELIVERY_REQUESTS[busy ? delivery : "send"],
-    content: buildContent(content, images),
-  });
+  return requestAgent(store, { type: "agent.prompt.requested", content: body });
+}
+
+export function sendNextQueuedPrompt(store: AppStore): void {
+  const [next] = store.state.queuedPrompts;
+  if (next === undefined || store.state.status !== "idle") return;
+  const sent = requestAgent(store, { type: "agent.prompt.requested", content: next }, "ignore");
+  if (sent) store.emit({ type: "ui.prompt.dequeued" });
 }
 
 export function submitPrompt(

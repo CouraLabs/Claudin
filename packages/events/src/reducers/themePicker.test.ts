@@ -9,7 +9,7 @@ const play = (events: AppEvent[]) => events.reduce(reduceSessionState, createSes
 
 test("opens the theme picker on the current theme", () => {
   const state = play([
-    { type: "ui.theme.selected", theme: "dracula" },
+    { type: "options.theme.saved", theme: "dracula" },
     { type: "ui.theme.picker.opened" },
   ]);
   expect(state.ui.picker).toEqual({ kind: "theme", selected: THEME_NAMES.indexOf("dracula") });
@@ -17,7 +17,7 @@ test("opens the theme picker on the current theme", () => {
 
 test("wraps the theme picker selection across every theme", () => {
   const state = play([
-    { type: "ui.theme.selected", theme: THEME_NAMES[0] },
+    { type: "options.theme.saved", theme: THEME_NAMES[0] },
     { type: "ui.theme.picker.opened" },
     { type: "ui.picker.moved", delta: -1 },
   ]);
@@ -25,7 +25,7 @@ test("wraps the theme picker selection across every theme", () => {
 });
 
 test("selecting a theme stores it and posts a notice", () => {
-  const state = play([{ type: "ui.theme.selected", theme: "nord" }]);
+  const state = play([{ type: "options.theme.saved", theme: "nord" }]);
   expect(state.theme).toBe("nord");
   expect(state.transcript.at(-1)).toMatchObject({ kind: "notice", text: "Theme set to nord" });
 });
@@ -34,4 +34,10 @@ test("reads readable permission labels and passes unknown modes through", () => 
   expect(readPermissionLabel("acceptEdits")).toBe("Accept Edits Permission");
   expect(readPermissionLabel("auto")).toBe("Automatic Permissions");
   expect(readPermissionLabel("custom")).toBe("custom");
+});
+
+test("loaded options set the theme and keep the current one when absent", () => {
+  const loaded = play([{ type: "options.loaded", theme: "nord" }]);
+  expect(loaded.theme).toBe("nord");
+  expect(reduceSessionState(loaded, { type: "options.loaded" }).theme).toBe("nord");
 });

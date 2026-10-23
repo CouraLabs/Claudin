@@ -18,3 +18,6 @@ export function appendEntry(state: SessionState, entry: NewEntry): SessionState 
 
 export const appendNotice = (state: SessionState, text: string): SessionState =>
   appendEntry(state, { kind: "notice", text });
+
+export const appendMarkdownNotice = (state: SessionState, text: string): SessionState =>
+  appendEntry(state, { kind: "notice", text, markdown: true });

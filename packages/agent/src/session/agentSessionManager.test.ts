@@ -53,25 +53,41 @@ test("a turn stays open until background tasks finish", async () => {
   ]);
   const events = await collect(session.prompt("go"));
   expect(noteText(events)).toContain("task done");
-  expect(session.backgroundTaskCount).toBe(0);
+  expect(session.liveTaskIds.size).toBe(0);
 });
 
-test("queue and steer deliver the prompt with their priority", async () => {
-  const seen: Array<SDKUserMessage["priority"]> = [];
-  const { session } = createFixture((input) => {
-    seen.push(input.priority);
-    return [RESULT_MESSAGE];
-  });
-  await collect(session.prompt("a", "later"));
-  await collect(session.prompt("b", "now"));
-  await collect(session.prompt("c"));
-  expect(seen).toEqual(["later", "now", undefined]);
+const taskEvent = (subtype: string, taskId: string) =>
+  ({ type: "system", subtype, task_id: taskId, status: "completed" }) as unknown as SDKMessage;
+
+test("a turn stays open for parallel subagents the tasks list has not reported", async () => {
+  const { session } = createFixture(() => [
+    taskEvent("task_started", "a"),
+    taskEvent("task_started", "b"),
+    RESULT_MESSAGE,
+    taskEvent("task_notification", "a"),
+    RESULT_MESSAGE,
+    taskEvent("task_notification", "b"),
+    note("all done"),
+    RESULT_MESSAGE,
+  ]);
+  const events = await collect(session.prompt("fan out"));
+  expect(noteText(events)).toContain("all done");
+  expect(session.liveTaskIds.size).toBe(0);
+});
+
+test("ambient tasks do not hold the turn open", async () => {
+  const { session } = createFixture(() => [
+    { ...taskEvent("task_started", "w"), ambient: true } as SDKMessage,
+    RESULT_MESSAGE,
+  ]);
+  const events = await collect(session.prompt("watch"));
+  expect(events.at(-1)).toMatchObject({ message: { type: "result" } });
 });
 
 test("a second prompt during a turn joins the running turn", async () => {
   const { session } = createFixture(() => [RESULT_MESSAGE]);
   const first = session.prompt("one");
-  const second = session.prompt("two", "later");
+  const second = session.prompt("two");
   const [firstEvents, secondEvents] = await Promise.all([collect(first), collect(second)]);
   expect(secondEvents).toEqual([]);
   const results = firstEvents.filter(

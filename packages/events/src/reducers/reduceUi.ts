@@ -1,4 +1,5 @@
 import { THEME_NAMES } from "../models/themeNames.ts";
+import { DEFAULT_EFFORT, effortLevelSchema } from "../requests/agentRequestEvents.ts";
 import type { FocusTarget, PickerKind, UiEvent } from "../requests/uiEvents.ts";
 import type { SessionState } from "../session/sessionState.ts";
 import { appendNotice } from "./appendEntry.ts";
@@ -12,6 +13,7 @@ import {
 import { listCheckpoints } from "./reduceCheckpoint.ts";
 import { closeDiffViewer, moveDiffViewer } from "./reduceDiffViewer.ts";
 import { loadHistory, moveHistory, resetHistory, searchHistory } from "./reduceHistory.ts";
+import { dequeuePrompt, queuePrompt } from "./reducePromptQueue.ts";
 import {
   changeQuestionCustom,
   moveQuestionCursor,
@@ -48,6 +50,7 @@ const toggleTool = (state: SessionState, callId: string): SessionState => ({
 const pickerSize = (state: SessionState, kind: PickerKind): number => {
   if (kind === "model") return state.models.length;
   if (kind === "theme") return THEME_NAMES.length;
+  if (kind === "effort") return effortLevelSchema.options.length;
   if (kind === "rewind") return listCheckpoints(state).length;
   return state.sessionList.length;
 };
@@ -64,6 +67,15 @@ function movePicker(state: SessionState, delta: 1 | -1): SessionState {
 const openThemePicker = (state: SessionState): SessionState => {
   const selected = Math.max(THEME_NAMES.indexOf(state.theme), 0);
   return { ...state, ui: { ...state.ui, picker: { kind: "theme", selected } } };
+};
+
+const openEffortPicker = (state: SessionState): SessionState => {
+  const current = state.effort || DEFAULT_EFFORT;
+  const selected = Math.max(
+    effortLevelSchema.options.findIndex((level) => level === current),
+    0,
+  );
+  return { ...state, ui: { ...state.ui, picker: { kind: "effort", selected } } };
 };
 
 function openRewindPicker(state: SessionState): SessionState {
@@ -90,8 +102,12 @@ export function reduceUi(state: SessionState, event: UiEvent): SessionState {
       return { ...state, ui: { ...state.ui, picker: null } };
     case "ui.theme.picker.opened":
       return openThemePicker(state);
-    case "ui.theme.selected":
-      return appendNotice({ ...state, theme: event.theme }, `Theme set to ${event.theme}`);
+    case "ui.effort.picker.opened":
+      return openEffortPicker(state);
+    case "ui.prompt.queued":
+      return queuePrompt(state, event.content);
+    case "ui.prompt.dequeued":
+      return dequeuePrompt(state);
     case "ui.rewind.picker.opened":
       return openRewindPicker(state);
     case "ui.history.moved":

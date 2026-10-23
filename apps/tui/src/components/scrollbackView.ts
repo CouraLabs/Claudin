@@ -7,6 +7,7 @@ import {
 } from "@opentui/core";
 import { Theme } from "../theme/colors.ts";
 import { AssistantMessageView } from "./assistantMessageView.ts";
+import { MarkdownNoticeView } from "./markdownNoticeView.ts";
 import { NoticeView } from "./noticeView.ts";
 import { ThoughtView } from "./thoughtView.ts";
 import type { ToolCallHooks } from "./toolCallView.ts";
@@ -16,7 +17,11 @@ import type { EntryView } from "./viewTypes.ts";
 
 type AnyEntryView = EntryView<never> & { renderable: Renderable };
 
-type ScrollbackOptions = { syntaxStyle: SyntaxStyle; hooks: ToolCallHooks };
+type ScrollbackOptions = {
+  syntaxStyle: SyntaxStyle;
+  mutedSyntaxStyle: SyntaxStyle;
+  hooks: ToolCallHooks;
+};
 
 export class ScrollbackView {
   readonly renderable: ScrollBoxRenderable;
@@ -67,9 +72,9 @@ export class ScrollbackView {
     else if (below > 0) this.renderable.scrollBy(Math.min(below, above));
   }
 
-  reset(syntaxStyle: SyntaxStyle): void {
+  reset(syntaxStyle: SyntaxStyle, mutedSyntaxStyle: SyntaxStyle): void {
     this.dropViews(() => true);
-    this.options = { syntaxStyle, hooks: { ...this.options.hooks, syntaxStyle } };
+    this.options = { syntaxStyle, mutedSyntaxStyle, hooks: { ...this.options.hooks, syntaxStyle } };
   }
 
   dropRemovedViews(state: SessionState): void {
@@ -94,14 +99,18 @@ export class ScrollbackView {
   }
 
   createView(entry: TranscriptEntry): AnyEntryView {
-    const { syntaxStyle, hooks } = this.options;
+    const { syntaxStyle, mutedSyntaxStyle, hooks } = this.options;
     switch (entry.kind) {
       case "user":
         return new UserMessageView(this.renderer) as AnyEntryView;
       case "assistant":
         return new AssistantMessageView(this.renderer, syntaxStyle) as AnyEntryView;
       case "notice":
-        return new NoticeView(this.renderer) as AnyEntryView;
+        return (
+          entry.markdown
+            ? new MarkdownNoticeView(this.renderer, mutedSyntaxStyle)
+            : new NoticeView(this.renderer)
+        ) as AnyEntryView;
       case "thought":
         return new ThoughtView(this.renderer) as AnyEntryView;
       case "tools":

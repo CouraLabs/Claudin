@@ -498,13 +498,17 @@ test("the quit command and its aliases exit the app", async () => {
   }
 });
 
-test("a busy agent shows the queue and steer title and the interrupt hint", async () => {
+test("a busy agent shows the queue and steer hints as the prompt placeholder", async () => {
   const harness = await createHarness();
   expect((await harness.frame()).includes("Ctrl+Q (queue)")).toBe(false);
   await submit(harness, "long task");
   const output = await harness.frame();
-  expect(output).toContain("Ctrl+Q (queue) Ctrl+W (steer)");
+  expect(output).toContain("Enter (steer) Ctrl+Q (queue)");
   expect(output).toContain("(esc esc)");
+  harness.client.receiveMessage({ type: "result", subtype: "success", is_error: false });
+  const idle = await harness.frame();
+  expect(idle).not.toContain("Ctrl+Q (queue)");
+  expect(idle).toContain("Type your prompt");
 });
 
 test("ctrl+c while idle exits and closes the client", async () => {
@@ -598,43 +602,57 @@ test("tab cycles focus between the input and the scrollback", async () => {
   expect(await harness.frame()).toContain("yy");
 });
 
-test("ctrl+q queues and ctrl+w steers a prompt while the agent is busy", async () => {
+const countSentPrompts = (harness: Awaited<ReturnType<typeof createHarness>>): number =>
+  harness.client.sent.filter((request) => request.type === "agent.prompt.requested").length;
+
+test("ctrl+q holds a prompt while busy and sends it only when the agent is idle", async () => {
   const harness = await createHarness();
   await submit(harness, "first");
   await harness.mockInput.typeText("second");
   harness.mockInput.pressKey("q", { ctrl: true });
-  expect(harness.client.lastOfType("agent.prompt.queue.requested")).toEqual({
-    type: "agent.prompt.queue.requested",
-    agentSessionId: "a1",
-    content: "second",
-  });
-  await harness.mockInput.typeText("third");
-  harness.mockInput.pressKey("w", { ctrl: true });
-  expect(harness.client.lastOfType("agent.prompt.steer.requested")).toEqual({
-    type: "agent.prompt.steer.requested",
-    agentSessionId: "a1",
-    content: "third",
-  });
-  const output = await harness.frame();
-  expectUserRow(output, "second");
-  expectUserRow(output, "third");
+  expect(countSentPrompts(harness)).toBe(1);
+  const queued = await harness.frame();
+  expect(queued).toContain("Queued");
+  expect(queued).toContain("1. second");
+
+  harness.client.receiveMessage({ type: "result", subtype: "success", is_error: false });
+  expect(harness.client.lastOfType("agent.prompt.requested")?.content).toBe("second");
+  const sent = await harness.frame();
+  expectUserRow(sent, "second");
+  expect(sent).not.toContain("Queued");
 });
 
-test("ctrl+q and ctrl+w send a normal prompt when the agent is idle", async () => {
+test("queued prompts are sent one per idle turn, in order", async () => {
+  const harness = await createHarness();
+  await submit(harness, "first");
+  await harness.mockInput.typeText("second");
+  harness.mockInput.pressKey("q", { ctrl: true });
+  await harness.mockInput.typeText("third");
+  harness.mockInput.pressKey("q", { ctrl: true });
+  expect(countSentPrompts(harness)).toBe(1);
+
+  harness.client.receiveMessage({ type: "result", subtype: "success", is_error: false });
+  expect(harness.client.lastOfType("agent.prompt.requested")?.content).toBe("second");
+  expect(countSentPrompts(harness)).toBe(2);
+
+  harness.client.receiveMessage({ type: "result", subtype: "success", is_error: false });
+  expect(harness.client.lastOfType("agent.prompt.requested")?.content).toBe("third");
+  expect(countSentPrompts(harness)).toBe(3);
+});
+
+test("ctrl+q sends a normal prompt when the agent is idle", async () => {
   const harness = await createHarness();
   await harness.mockInput.typeText("hello");
   harness.mockInput.pressKey("q", { ctrl: true });
   expect(harness.client.lastOfType("agent.prompt.requested")?.content).toBe("hello");
-  expect(harness.client.lastOfType("agent.prompt.queue.requested")).toBeUndefined();
 });
 
-test("a plain enter while busy keeps the text and explains the shortcuts", async () => {
+test("a plain enter while busy steers the running turn", async () => {
   const harness = await createHarness();
   await submit(harness, "first");
   await submit(harness, "second");
-  const output = await harness.frame();
-  expect(output).toContain("Ctrl+Q queues");
-  expect(output).toContain("second");
+  expect(harness.client.lastOfType("agent.prompt.requested")?.content).toBe("second");
+  expectUserRow(await harness.frame(), "second");
 });
 
 test("the status line shows the 5h and 7d rate limits with the time to reset", async () => {
@@ -720,9 +738,33 @@ test("the theme picker previews the highlighted theme and saves only on enter", 
   harness.mockInput.pressEnter();
   harness.mockInput.pressArrow("down");
   harness.mockInput.pressEnter();
+  const request = harness.client.lastOfType("options.theme.save.requested");
+  expect(request?.theme).toBeDefined();
+  harness.client.receive({ type: "options.theme.saved", theme: request!.theme });
   const output = await harness.frame();
   expect(output).toContain("Theme set to");
   expect(Theme.accent.brand).not.toBe(defaultBrand);
+});
+
+test("a stored theme loaded at startup is applied", async () => {
+  const harness = await createHarness();
+  const defaultBrand = Theme.accent.brand;
+  harness.client.receive({ type: "options.loaded", theme: "aura" });
+  await harness.frame();
+  expect(Theme.accent.brand).not.toBe(defaultBrand);
+});
+
+test("/effort without a level opens the effort picker and enter sets the highlighted level", async () => {
+  const harness = await createHarness();
+  await submit(harness, "/effort");
+  harness.mockInput.pressEnter();
+  const opened = await harness.frame();
+  expect(opened).toContain("Select an effort level");
+  expect(opened).toContain("● high");
+  harness.mockInput.pressArrow("down");
+  harness.mockInput.pressEnter();
+  expect(harness.client.lastOfType("agent.effort.set.requested")?.effort).toBe("xhigh");
+  expect(await harness.frame()).not.toContain("Select an effort level");
 });
 
 test("the header shows the full path below a top margin and a bottom border", async () => {

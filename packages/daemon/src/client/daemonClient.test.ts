@@ -41,7 +41,7 @@ const waitFor = async (check: () => boolean) => {
 test("client receives responses and failures from the daemon", async () => {
   const { client, received } = await connect(await startServer());
   client.send({ type: "session.create.requested" });
-  client.send({ type: "agent.prompt.queue.requested", agentSessionId: "missing", content: "hi" });
+  client.send({ type: "agent.prompt.requested", agentSessionId: "missing", content: "hi" });
   await waitFor(() => received.length === 2);
   expect(received.map(({ type }) => type).sort()).toEqual(["request.failed", "session.created"]);
   expect(received.every(({ peer }) => !peer)).toBe(true);

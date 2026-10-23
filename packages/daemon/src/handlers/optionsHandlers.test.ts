@@ -47,3 +47,14 @@ test("saving keeps the other options in the file", async () => {
   await collect(context, { type: "options.background.save.requested", color });
   expect(await Bun.file(optionsPath).json()).toEqual({ other: true, background: color });
 });
+
+test("saving a theme writes it to the options file and loading reads it back", async () => {
+  const { context, optionsPath } = await createContext();
+  await collect(context, { type: "options.background.save.requested", color });
+  const saved = await collect(context, { type: "options.theme.save.requested", theme: "aura" });
+  expect(saved).toEqual([{ type: "options.theme.saved", theme: "aura" }]);
+  expect(await Bun.file(optionsPath).json()).toEqual({ background: color, theme: "aura" });
+  expect(await collect(context, { type: "options.load.requested" })).toEqual([
+    { type: "options.loaded", background: color, theme: "aura" },
+  ]);
+});

@@ -1,6 +1,11 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { type BackgroundColor, type OptionsFile, optionsFileSchema } from "@claudin/events";
+import {
+  type BackgroundColor,
+  type OptionsFile,
+  optionsFileSchema,
+  type ThemeName,
+} from "@claudin/events";
 
 export const OPTIONS_PATH = join(homedir(), ".claudin", "options.json");
 
@@ -12,6 +17,12 @@ export async function readOptions(path: string): Promise<OptionsFile> {
   return parsed.success ? parsed.data : {};
 }
 
-export async function saveBackground(path: string, background: BackgroundColor): Promise<void> {
-  await Bun.write(path, JSON.stringify({ ...(await readOptions(path)), background }, null, 2));
-}
+const saveOption = async (path: string, option: OptionsFile): Promise<void> => {
+  await Bun.write(path, JSON.stringify({ ...(await readOptions(path)), ...option }, null, 2));
+};
+
+export const saveBackground = (path: string, background: BackgroundColor): Promise<void> =>
+  saveOption(path, { background });
+
+export const saveTheme = (path: string, theme: ThemeName): Promise<void> =>
+  saveOption(path, { theme });

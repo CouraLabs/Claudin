@@ -24,6 +24,7 @@ import { PromptInput } from "./components/promptInput.ts";
 import { ScrollbackView } from "./components/scrollbackView.ts";
 import { SessionInfoBar } from "./components/sessionInfoBar.ts";
 import { StatusLine } from "./components/statusLine.ts";
+import { PromptQueueView } from "./components/promptQueueView.ts";
 import { TaskPanel } from "./components/taskPanel.ts";
 import { ToastView } from "./components/toastView.ts";
 import { buildListView } from "./format/listViews.ts";
@@ -35,6 +36,7 @@ import {
   answerApproval,
   cancelTurn,
   type PromptDelivery,
+  sendNextQueuedPrompt,
   stopTask,
   submitPrompt,
 } from "./input/promptActions.ts";
@@ -45,7 +47,7 @@ import { buildHistoryPath, readHistoryFile } from "./prompt/historyFile.ts";
 import { HistorySaver } from "./prompt/historySaver.ts";
 import { AppStore } from "./store/appStore.ts";
 import { applyTheme, Theme } from "./theme/colors.ts";
-import { createSyntaxStyle } from "./theme/syntaxStyle.ts";
+import { createMutedSyntaxStyle, createSyntaxStyle } from "./theme/syntaxStyle.ts";
 
 const CLOCK_INTERVAL_MS = 100;
 const RATE_LIMIT_INTERVAL_MS = 60_000;
@@ -75,6 +77,7 @@ export async function startTui(
   const store = new AppStore(client);
   const clipboard = options.clipboard ?? createHostClipboard();
   let syntaxStyle = createSyntaxStyle(activeRenderer);
+  let mutedSyntaxStyle = createMutedSyntaxStyle(activeRenderer);
   let appliedTheme: ThemeName = readShownTheme(store.state);
   let appliedBackground = readShownBackground(store.state);
 
@@ -85,8 +88,10 @@ export async function startTui(
   const toastView = new ToastView(activeRenderer);
   const statusLine = new StatusLine(activeRenderer, () => cancelTurn(store));
   const taskPanel = new TaskPanel(activeRenderer, (taskId) => stopTask(store, taskId));
+  const promptQueue = new PromptQueueView(activeRenderer);
   const scrollback = new ScrollbackView(activeRenderer, {
     syntaxStyle,
+    mutedSyntaxStyle,
     hooks: {
       syntaxStyle,
       onDecision: (decision, id) => answerApproval(store, decision, id),
@@ -131,11 +136,12 @@ export async function startTui(
     scrollback,
     diffViewer,
     statusLine,
-    taskPanel,
+    promptQueue,
     popover,
     backgroundPanel,
     input,
     infoBar,
+    taskPanel,
   ];
   for (const part of parts) root.add(part.renderable);
   activeRenderer.root.add(root);
@@ -159,11 +165,12 @@ export async function startTui(
     appliedBackground = shownBackground;
     applyTheme(shownTheme, shownBackground);
     if (themeChanged) {
-      const previous = syntaxStyle;
+      const previous = [syntaxStyle, mutedSyntaxStyle];
       syntaxStyle = createSyntaxStyle(activeRenderer);
-      scrollback.reset(syntaxStyle);
+      mutedSyntaxStyle = createMutedSyntaxStyle(activeRenderer);
+      scrollback.reset(syntaxStyle, mutedSyntaxStyle);
       diffViewer.reset(syntaxStyle);
-      previous.destroy();
+      for (const style of previous) style.destroy();
     }
     root.backgroundColor = Theme.bg.default;
     input.applyColors();
@@ -175,6 +182,7 @@ export async function startTui(
     header.update(state);
     statusLine.update(state);
     taskPanel.update(state);
+    promptQueue.update(state);
     toastView.update(state);
     infoBar.update(state);
     scrollback.update(state);
@@ -186,7 +194,7 @@ export async function startTui(
     input.setFocused(inputFocused);
     scrollback.setFocused(!inputFocused);
     input.setBusy(isStatusBusy(state.status));
-    input.setBorderColor(inputFocused ? Theme.status.success : Theme.border.separator);
+    input.setBorderColor(inputFocused ? Theme.fg.muted : Theme.border.separator);
     const awaitingId = (findAwaitingCalls(state)[0] ?? findQuestionCalls(state)[0])?.id;
     if (awaitingId && awaitingId !== revealedCallId) {
       scrollback.revealEntry(findGroupId(state, awaitingId) ?? "");
@@ -195,6 +203,7 @@ export async function startTui(
   };
 
   store.subscribe(render);
+  store.subscribe(() => sendNextQueuedPrompt(store));
   const notifier = new TurnNotifier(activeRenderer);
   store.subscribeOwnEvents((event) => {
     reactToEvent(store, event);

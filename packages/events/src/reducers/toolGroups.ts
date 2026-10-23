@@ -1,3 +1,4 @@
+import { BATCH_EDIT_TOOL_NAME } from "../models/customTools.ts";
 import type { SessionState } from "../session/sessionState.ts";
 import type {
   AgentStatus,
@@ -14,15 +15,23 @@ export const isToolsEntry = (entry: TranscriptEntry): entry is ToolsEntry => ent
 export const listToolCalls = (state: SessionState): ToolCall[] =>
   state.transcript.filter(isToolsEntry).flatMap((entry) => entry.calls);
 
-const EDIT_TOOLS = new Set(["Write", "Edit", "MultiEdit", "NotebookEdit"]);
+const EDIT_TOOLS = new Set(["Write", "Edit", "MultiEdit", "mcp__claudin__BatchEdit"]);
 
-const readEditedPath = ({ input }: ToolCall): unknown => input.file_path ?? input.notebook_path;
+export const listBatchEditPaths = (input: ToolCall["input"]): unknown[] =>
+  Array.isArray(input.edits) ? input.edits.map((edit) => edit?.file_path) : [];
+
+const readEditedPaths = (call: ToolCall): unknown[] =>
+  call.name === BATCH_EDIT_TOOL_NAME
+    ? listBatchEditPaths(call.input)
+    : EDIT_TOOLS.has(call.name)
+      ? [call.input.file_path ?? call.input.notebook_path]
+      : [];
 
 export const listEditedFiles = (state: SessionState): string[] => [
   ...new Set(
     listToolCalls(state)
-      .filter((call) => EDIT_TOOLS.has(call.name) && call.status === "completed")
-      .map(readEditedPath)
+      .filter((call) => call.status === "completed")
+      .flatMap(readEditedPaths)
       .filter((path): path is string => typeof path === "string"),
   ),
 ];

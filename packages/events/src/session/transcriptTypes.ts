@@ -36,7 +36,7 @@ export type TranscriptEntry =
       text: string;
       streaming: boolean;
     }
-  | { kind: "notice"; id: string; at: number; text: string }
+  | { kind: "notice"; id: string; at: number; text: string; markdown?: boolean }
   | { kind: "thought"; id: string; at: number; durationMs: number }
   | { kind: "tools"; id: string; calls: ToolCall[] };
 

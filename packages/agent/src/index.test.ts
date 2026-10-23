@@ -1,10 +1,8 @@
 import { expect, test } from "vitest";
 import { AgentSessionManager, buildUserMessage } from "./index.ts";
 
-test("builds user message with priority", () => {
-  const message = buildUserMessage("hi", "now");
-  expect(message).toMatchObject({ type: "user", priority: "now" });
-  expect(message.message.content).toBe("hi");
+test("builds a user message that keeps the prompt content", () => {
+  expect(buildUserMessage("hi").message.content).toBe("hi");
 });
 
 test("delivers prompts verbatim except slash commands", () => {

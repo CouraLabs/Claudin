@@ -1,7 +1,14 @@
-import { listCheckpoints, type Picker, type SessionState, THEME_NAMES } from "@claudin/events";
+import {
+  effortLevelSchema,
+  listCheckpoints,
+  type Picker,
+  type SessionState,
+  THEME_NAMES,
+} from "@claudin/events";
 import type { AppStore } from "../store/appStore.ts";
 import { guardIdle } from "./agentBusy.ts";
 import { requestAgent } from "./agentRequest.ts";
+import { saveTheme } from "./themeActions.ts";
 
 type PickerConfirm = (store: AppStore, state: SessionState, selected: number) => void;
 
@@ -23,7 +30,11 @@ const PICKER_CONFIRMS: Record<Picker["kind"], PickerConfirm> = {
   },
   theme(store, _state, selected) {
     const theme = THEME_NAMES[selected];
-    if (theme) store.emit({ type: "ui.theme.selected", theme });
+    if (theme) saveTheme(store, theme);
+  },
+  effort(store, _state, selected) {
+    const effort = effortLevelSchema.options[selected];
+    if (effort) requestAgent(store, { type: "agent.effort.set.requested", effort });
   },
   rewind(store, state, selected) {
     const userMessageId = listCheckpoints(state)[selected]?.checkpointId;

@@ -37,12 +37,14 @@ export class StatusLine {
   constructor(renderer: CliRenderer, onStop: () => void) {
     this.renderable = new BoxRenderable(renderer, {
       height: 2,
-      paddingTop: 1,
       flexShrink: 0,
       flexDirection: "row",
       justifyContent: "space-between",
+      border: ["top"],
+      borderColor: Theme.border.subtle,
       paddingLeft: 2,
       paddingRight: 2,
+      visible: false,
     });
     this.label = new TextRenderable(renderer, { content: "", wrapMode: "none" });
     this.stats = new TextRenderable(renderer, {
@@ -61,9 +63,11 @@ export class StatusLine {
       this.label.content = state.lastRun
         ? new StyledText(buildLastRunChunks(state.lastRun, readLastPrompt(state)))
         : "";
+      this.renderable.visible = state.lastRun !== undefined;
       this.stats.content = "";
       return;
     }
+    this.renderable.visible = true;
     const label = agentLabel(state.status);
     const busy = label.icon === undefined;
     const frame = SPINNER_FRAMES[Math.floor(state.now / SPINNER_STEP_MS) % SPINNER_FRAMES.length];

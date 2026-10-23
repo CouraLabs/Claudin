@@ -10,15 +10,14 @@ export class SessionInfoBar {
 
   constructor(renderer: CliRenderer) {
     this.renderable = new BoxRenderable(renderer, {
-      marginBottom: 1,
       flexShrink: 0,
       flexDirection: "row",
       flexWrap: "wrap",
       rowGap: 1,
       columnGap: 0,
       justifyContent: "space-between",
-      paddingLeft: 1,
-      paddingRight: 1,
+      paddingLeft: 2,
+      paddingRight: 2,
     });
     this.info = new TextRenderable(renderer, { content: "", wrapMode: "none", flexShrink: 0 });
     this.limits = new TextRenderable(renderer, {

@@ -1,6 +1,7 @@
 import type { SDKMessage } from "@anthropic-ai/claude-agent-sdk";
 import type { RunningTask } from "../session/runningTask.ts";
 import type { SessionState } from "../session/sessionState.ts";
+import { readRequestedModel } from "./reduceTaskModel.ts";
 
 type SystemMessage<Subtype extends string> = Extract<SDKMessage, { subtype: Subtype }>;
 type TaskMessage =
@@ -28,6 +29,8 @@ const startTask = (state: SessionState, message: SystemMessage<"task_started">):
     kind: message.subagent_type ?? message.task_type ?? "task",
     description: message.description,
     startedAt: state.now,
+    toolUseId: message.tool_use_id,
+    model: readRequestedModel(state, message.tool_use_id),
     tokens: 0,
     paused: false,
   };

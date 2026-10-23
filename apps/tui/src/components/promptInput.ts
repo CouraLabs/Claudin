@@ -14,7 +14,7 @@ import { type PastedContent, planPaste } from "../prompt/planPaste.ts";
 import { Theme } from "../theme/colors.ts";
 
 const MAX_INPUT_LINES = 8;
-const BUSY_TITLE = " Ctrl+Q (queue) Ctrl+W (steer) ";
+const BUSY_PLACEHOLDER = "Enter (steer) Ctrl+Q (queue)";
 const ATTACHMENT_STYLE = "attachment";
 const PLACEHOLDER = "Type your prompt, /slash command, or @file reference...";
 
@@ -43,12 +43,11 @@ export class PromptInput {
   constructor(renderer: CliRenderer, handlers: PromptInputHandlers) {
     this.renderable = new BoxRenderable(renderer, {
       border: ["top", "bottom"],
+      borderColor: Theme.fg.muted,
       borderStyle: "rounded",
-      bottomTitleAlignment: "right",
       flexDirection: "row",
       height: 3,
       flexShrink: 0,
-      paddingLeft: 1,
     });
     this.attachmentStyle = SyntaxStyle.create(renderer.nativeScene);
     this.textarea = new TextareaRenderable(renderer, {
@@ -114,8 +113,8 @@ export class PromptInput {
   }
 
   setBusy(busy: boolean): void {
-    const title = busy ? BUSY_TITLE : undefined;
-    if (this.renderable.bottomTitle !== title) this.renderable.bottomTitle = title;
+    const placeholder = busy ? BUSY_PLACEHOLDER : PLACEHOLDER;
+    if (this.textarea.placeholder !== placeholder) this.textarea.placeholder = placeholder;
   }
 
   setBorderColor(color: string): void {
@@ -123,8 +122,7 @@ export class PromptInput {
   }
 
   applyColors(): void {
-    this.renderable.titleColor = Theme.fg.primary;
-    this.chevron.fg = Theme.accent.brand;
+    this.chevron.fg = Theme.fg.muted;
     this.textarea.placeholderColor = Theme.fg.muted;
     this.textarea.textColor = Theme.fg.primary;
     this.textarea.focusedTextColor = Theme.fg.primary;

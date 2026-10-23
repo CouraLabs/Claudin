@@ -105,23 +105,15 @@ test("submits prompts, slash commands and approvals", () => {
     agentSessionId: "a1",
     content: "hello",
   });
-  expect(submitPrompt(store, "again")).toBe(false);
-  expect(store.state.transcript.at(-1)).toMatchObject({
-    kind: "notice",
-    text: expect.stringContaining("Ctrl+Q"),
+  expect(submitPrompt(store, "again")).toBe(true);
+  expect(sent.at(-1)).toEqual({
+    type: "agent.prompt.requested",
+    agentSessionId: "a1",
+    content: "again",
   });
   expect(submitPrompt(store, "later", "queue")).toBe(true);
-  expect(sent.at(-1)).toEqual({
-    type: "agent.prompt.queue.requested",
-    agentSessionId: "a1",
-    content: "later",
-  });
-  expect(submitPrompt(store, "instead", "steer")).toBe(true);
-  expect(sent.at(-1)).toEqual({
-    type: "agent.prompt.steer.requested",
-    agentSessionId: "a1",
-    content: "instead",
-  });
+  expect(store.state.queuedPrompts).toEqual(["later"]);
+  expect(sent.at(-1)).toMatchObject({ content: "again" });
   submitPrompt(store, "/cd /tmp");
   expect(store.state.transcript.at(-1)).toMatchObject({
     text: expect.stringContaining("busy"),

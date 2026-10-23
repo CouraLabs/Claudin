@@ -51,30 +51,6 @@ test("creating a session closes agent sessions and persists session.created once
   expect(created).toHaveLength(1);
 });
 
-test("queued prompts are accepted and then streamed with later priority", async () => {
-  const context = await createDaemonContext(
-    new FileSessionStore(await mkdtemp(join(tmpdir(), "claudin-"))),
-  );
-  const priorities: unknown[] = [];
-  useScriptedAgents(context, (input) => {
-    priorities.push(input.priority);
-    return [RESULT_MESSAGE];
-  });
-  context.agents.createSession({ sessionId: "a" });
-
-  const responses = await collect(context, {
-    type: "agent.prompt.queue.requested",
-    agentSessionId: "a",
-    content: "hi",
-  });
-
-  expect(responses.map((response) => response.type)).toEqual([
-    "agent.prompt.accepted",
-    "agent.message.received",
-  ]);
-  expect(priorities).toEqual(["later"]);
-});
-
 test("cancel, approval and model requests reach the agent session", async () => {
   const context = await createDaemonContext(
     new FileSessionStore(await mkdtemp(join(tmpdir(), "claudin-"))),

@@ -9,7 +9,38 @@ export type Palette = {
   border: { subtle: string; focus: string; separator: string };
   accent: { brand: string; highlight: string };
   status: { success: string; danger: string; warning: string; info: string };
-  diff: { addedBg: string; removedBg: string };
+  diff: {
+    addedBg: string;
+    removedBg: string;
+    contextBg: string;
+    addedText: string;
+    removedText: string;
+    contextText: string;
+    lineNumber: string;
+    addedLineNumberBg: string;
+    removedLineNumberBg: string;
+  };
+  syntax: {
+    comment: string;
+    keyword: string;
+    function: string;
+    variable: string;
+    string: string;
+    number: string;
+    type: string;
+    operator: string;
+    punctuation: string;
+  };
+  markdown: {
+    heading: string;
+    strong: string;
+    emphasis: string;
+    listItem: string;
+    blockQuote: string;
+    code: string;
+    link: string;
+    linkText: string;
+  };
 };
 
 const SECONDARY_TEXT_WEIGHT = 0.3;
@@ -35,7 +66,7 @@ export function buildPalette(
     },
     fg: {
       primary: hex("text"),
-      secondary: rgbToHex(tint(color("text"), color("textMuted"), SECONDARY_TEXT_WEIGHT)),
+      secondary: hex("secondary") ?? rgbToHex(tint(color("text"), color("textMuted"), SECONDARY_TEXT_WEIGHT)),
       muted: hex("textMuted"),
     },
     border: { subtle: hex("borderSubtle"), focus: hex("borderActive"), separator: hex("border") },
@@ -46,6 +77,37 @@ export function buildPalette(
       warning: hex("warning"),
       info: hex("info"),
     },
-    diff: { addedBg: hex("diffAddedBg"), removedBg: hex("diffRemovedBg") },
+    diff: {
+      addedBg: hex("diffAddedBg"),
+      removedBg: hex("diffRemovedBg"),
+      contextBg: hex("diffContextBg"),
+      addedText: hex("diffAdded"),
+      removedText: hex("diffRemoved"),
+      contextText: hex("diffContext"),
+      lineNumber: hex("diffLineNumber"),
+      addedLineNumberBg: hex("diffAddedLineNumberBg"),
+      removedLineNumberBg: hex("diffRemovedLineNumberBg"),
+    },
+    syntax: {
+      comment: hex("syntaxComment"),
+      keyword: hex("syntaxKeyword"),
+      function: hex("syntaxFunction"),
+      variable: hex("syntaxVariable"),
+      string: hex("syntaxString"),
+      number: hex("syntaxNumber"),
+      type: hex("syntaxType"),
+      operator: hex("syntaxOperator"),
+      punctuation: hex("syntaxPunctuation"),
+    },
+    markdown: {
+      heading: hex("markdownHeading"),
+      strong: hex("markdownStrong"),
+      emphasis: hex("markdownEmph"),
+      listItem: hex("markdownListItem"),
+      blockQuote: hex("markdownBlockQuote"),
+      code: hex("markdownCode"),
+      link: hex("markdownLink"),
+      linkText: hex("markdownLinkText"),
+    },
   };
 }
