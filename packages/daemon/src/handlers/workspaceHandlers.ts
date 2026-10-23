@@ -1,5 +1,6 @@
 import type { RequestHandlers } from "../server/requestHandler.ts";
 import { readFileDiffs } from "../workspace/readFileDiffs.ts";
+import { readGitChangedPaths } from "../workspace/readGitChangedPaths.ts";
 import { searchWorkspaceFiles } from "../workspace/searchWorkspaceFiles.ts";
 import { readGitInfo } from "../workspace/workspaceInfo.ts";
 
@@ -23,6 +24,8 @@ export const workspaceHandlers: Pick<
     yield { type: "workspace.cwd.changed", cwd, ...(await readGitInfo(cwd)) };
   },
   async *"workspace.diff.requested"({ cwd }, request) {
-    yield { type: "workspace.diff.received", files: await readFileDiffs(cwd, request.paths) };
+    const changed = await readFileDiffs(cwd, await readGitChangedPaths(cwd));
+    const files = changed.length > 0 ? changed : await readFileDiffs(cwd, request.paths);
+    yield { type: "workspace.diff.received", files };
   },
 };

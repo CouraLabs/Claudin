@@ -3,7 +3,7 @@ import type { SessionState } from "../session/sessionState.ts";
 import { appendNotice } from "./appendEntry.ts";
 import { wrapIndex } from "./wrapIndex.ts";
 
-const NO_DIFFS_NOTICE = "No changes in the files this session edited";
+const NO_DIFFS_NOTICE = "No git changes or session edits to show";
 
 export function openDiffViewer(state: SessionState, files: FileDiff[]): SessionState {
   if (files.length === 0) return appendNotice(state, NO_DIFFS_NOTICE);

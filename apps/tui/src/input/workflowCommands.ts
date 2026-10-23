@@ -23,12 +23,10 @@ export const WORKFLOW_COMMANDS: Record<string, SlashCommand> = {
       if (guardIdle(store, "rewinding")) store.emit({ type: "ui.rewind.picker.opened" });
     },
   },
-  "/view-diffs": {
-    description: "Review the diffs of files this session edited",
+  "/diffs": {
+    description: "Review git changes, or this session's edits when there are none",
     run(store) {
-      const paths = listEditedFiles(store.state);
-      if (paths.length === 0) return postNotice(store, "This session has not edited any files");
-      store.request({ type: "workspace.diff.requested", paths });
+      store.request({ type: "workspace.diff.requested", paths: listEditedFiles(store.state) });
     },
   },
   "/export": {

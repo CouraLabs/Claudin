@@ -49,7 +49,7 @@ test("workspace files skip ignored directories", async () => {
 test("diff request returns patches for edited files, including untracked ones", async () => {
   const context = await createWorkspace();
   const { cwd } = context;
-  await Bun.$`git init -q && git add src && git -c user.email=t@t -c user.name=t commit -qm init`.cwd(
+  await Bun.$`git init -q && echo node_modules > .git/info/exclude && git add src && git -c user.email=t@t -c user.name=t commit -qm init`.cwd(
     cwd,
   );
   await writeFile(join(cwd, "src", "app.ts"), "export const app = 1;\n");
@@ -62,5 +62,32 @@ test("diff request returns patches for edited files, including untracked ones", 
       { path: "src/app.ts", additions: 1, deletions: 0 },
       { path: "notes.md", additions: 1, deletions: 0 },
     ],
+  });
+});
+
+test("diff request prefers git changes and falls back to the requested paths", async () => {
+  const context = await createWorkspace();
+  const { cwd } = context;
+  await Bun.$`git init -q && echo node_modules > .git/info/exclude && git add src && git -c user.email=t@t -c user.name=t commit -qm init`.cwd(
+    cwd,
+  );
+  const requested = [join(cwd, "src", "server.ts")];
+  const [clean] = await collect(context, { type: "workspace.diff.requested", paths: requested });
+  expect(clean).toMatchObject({ type: "workspace.diff.received", files: [] });
+  await writeFile(join(cwd, "src", "app.ts"), "export const app = 1;\n");
+  const [dirty] = await collect(context, { type: "workspace.diff.requested", paths: requested });
+  expect(dirty).toMatchObject({
+    type: "workspace.diff.received",
+    files: [{ path: "src/app.ts", additions: 1, deletions: 0 }],
+  });
+});
+
+test("diff request outside git shows the requested session paths", async () => {
+  const context = await createWorkspace();
+  const paths = [join(context.cwd, "src", "app.ts")];
+  const [response] = await collect(context, { type: "workspace.diff.requested", paths });
+  expect(response).toMatchObject({
+    type: "workspace.diff.received",
+    files: [{ path: "src/app.ts" }],
   });
 });

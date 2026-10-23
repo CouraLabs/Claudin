@@ -1067,7 +1067,7 @@ test("/rewind lists checkpointed prompts and rewinds files to the chosen one", a
   expect(await harness.frame()).toContain("Rewound 1 file(s) (+0 -12): src/login.ts");
 });
 
-test("/view-diffs asks for the edited files and shows their diffs until escape", async () => {
+test("/diffs asks for the session edits as a fallback and shows the diffs until escape", async () => {
   const harness = await createHarness(100, 32);
   await submit(harness, "edit it");
   harness.client.receiveMessage(
@@ -1075,7 +1075,7 @@ test("/view-diffs asks for the edited files and shows their diffs until escape",
   );
   harness.client.receiveMessage(toolResult("e1", "ok"));
   finishTurn(harness);
-  await submitCommand(harness, "/view-diffs");
+  await submitCommand(harness, "/diffs");
   expect(harness.client.lastOfType("workspace.diff.requested")?.paths).toEqual([
     "/work/app/src/a.ts",
   ]);
@@ -1091,10 +1091,10 @@ test("/view-diffs asks for the edited files and shows their diffs until escape",
     ],
   });
   const output = await harness.frame();
-  expect(output).toContain("Session diffs");
+  expect(output).toContain("Diffs");
   expect(output).toContain("new line");
   harness.mockInput.pressEscape();
-  expect(await harness.frame()).not.toContain("Session diffs");
+  expect(await harness.frame()).not.toContain("Diffs");
 });
 
 test("/export and /search reach the daemon and search results open a picker", async () => {

@@ -1,4 +1,4 @@
-import { relative } from "node:path";
+import { relative, resolve } from "node:path";
 import { countPatchLines, type FileDiff } from "@claudin/events";
 
 const isTracked = async (cwd: string, path: string): Promise<boolean> =>
@@ -12,9 +12,10 @@ async function readPatch(cwd: string, path: string): Promise<string> {
 }
 
 async function readFileDiff(cwd: string, path: string): Promise<FileDiff> {
-  const patch = await readPatch(cwd, path);
+  const absolute = resolve(cwd, path);
+  const patch = await readPatch(cwd, absolute);
   return {
-    path: relative(cwd, path) || path,
+    path: relative(cwd, absolute) || path,
     patch,
     additions: countPatchLines(patch, "+"),
     deletions: countPatchLines(patch, "-"),

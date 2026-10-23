@@ -54,7 +54,7 @@ test("filters slash commands by prefix", () => {
     "/clear",
     "/fork",
     "/rewind",
-    "/view-diffs",
+    "/diffs",
     "/export",
     "/search",
     "/quit",

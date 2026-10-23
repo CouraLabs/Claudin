@@ -3,7 +3,7 @@ import { bold, dim, fg, type TextChunk } from "@opentui/core";
 import { Theme } from "../theme/colors.ts";
 import { SEPARATOR } from "./glyphs.ts";
 
-const VIEWER_TITLE = "Session diffs";
+const VIEWER_TITLE = "Diffs";
 const VIEWER_HINT = "←/→ file · ↑/↓ PgUp/PgDn scroll · Esc close";
 
 const buildFileChunks = (file: FileDiff, selected: boolean): TextChunk[] => [
