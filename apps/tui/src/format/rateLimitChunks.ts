@@ -18,8 +18,8 @@ const buildWindowChunks = (label: string, window: RateWindow, now: number): Text
 
 export function buildRateLimitChunks(limits: RateLimits, now: number) {
   const windows: [string, RateWindow | undefined][] = [
-    ["➄", limits.fiveHour],
-    ["❼", limits.sevenDay],
+    ["🯵h", limits.fiveHour],
+    ["🯷d", limits.sevenDay],
   ];
   return windows.flatMap(([label, window], index) =>
     window

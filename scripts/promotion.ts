@@ -1,4 +1,5 @@
 import { buildApp } from "./build";
+import { collectReleaseChanges } from "./lib/collectReleaseChanges";
 import { createGithubRelease } from "./lib/createGithubRelease";
 import { nextVersion, parseBump } from "./lib/nextVersion";
 import { notifyDiscord } from "./lib/notifyDiscord";
@@ -28,6 +29,8 @@ requireEnv("NPM_TOKEN");
 const webhookUrl = requireEnv("PICOBU_DISCORD_WEBHOOK_URL");
 const version = nextVersion(await readRootVersion(), parseBump(bumpInput));
 
+const changes = await collectReleaseChanges();
+
 await buildApp(version);
 await publishDist(dryRun);
 
@@ -36,6 +39,6 @@ if (dryRun) {
 } else {
   await writeRootVersion(version);
   await createGithubRelease(version);
-  await notifyDiscord(webhookUrl, version);
+  await notifyDiscord(webhookUrl, version, changes);
   console.log(`Published ${PACKAGE_NAME}@${version}`);
 }
