@@ -132,7 +132,7 @@ export class ToolCallView {
     const glyph = call.expanded ? COLLAPSE_GLYPHS.expanded : COLLAPSE_GLYPHS.collapsed;
     const accent = this.hovered ? Theme.accent.brand : undefined;
     this.title.content = new StyledText([
-      fg(accent ?? toolColor(call.status))(`${glyph} `),
+      fg(accent ?? toolColor(call.status))(glyph),
       bold(fg(accent ?? Theme.fg.primary)(call.name)),
       fg(Theme.fg.secondary)(` ${summarizeToolCall(call)}`),
       fg(Theme.fg.muted)(stats),

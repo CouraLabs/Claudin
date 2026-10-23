@@ -44,7 +44,6 @@ export class UserMessageView implements EntryView<UserEntry> {
     if (entry === this.entry) return;
     this.entry = entry;
     this.text.content = new StyledText([
-      bold(fg(Theme.accent.brand)("❯ ")),
       bold(fg(Theme.fg.primary)(clipLines(entry.text, USER_LINES))),
     ]);
     this.clock.content = new StyledText([fg(Theme.fg.muted)(formatClock(entry.at))]);

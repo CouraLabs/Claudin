@@ -52,6 +52,7 @@ export type UiEvent =
   | { type: "ui.question.custom.changed"; text: string }
   | { type: "ui.question.recorded"; question: string; answer: string }
   | { type: "ui.exit.requested" }
+  | { type: "ui.title.set"; title: string }
   | { type: "ui.notice.posted"; text: string }
   | { type: "ui.toast.posted"; id: string; text: string }
   | { type: "ui.toast.dismissed"; id: string }

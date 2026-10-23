@@ -69,6 +69,7 @@ async function createHarness(width = 100, height = 32, options: TuiOptions = {})
     exitOnCtrlC: false,
     kittyKeyboard: true,
   });
+  setup.renderer.setTerminalTitle = () => {};
   const historyPath = join(await mkdtemp(join(tmpdir(), "claudin-history-")), "history.jsonl");
   await startTui(client, { renderer: setup.renderer, historyPath, ...options });
   client.receive({
@@ -110,6 +111,11 @@ const toolResult = (id: string, content: string) => ({
 async function submit(harness: Harness, text: string) {
   await harness.mockInput.typeText(text);
   harness.mockInput.pressEnter();
+}
+
+function expectUserRow(output: string, text: string) {
+  const row = output.split("\n").find((line) => line.includes(text)) ?? "";
+  expect(row.trimStart().startsWith(text)).toBe(true);
 }
 
 afterEach(() => {
@@ -168,7 +174,7 @@ test("submitting sends the prompt and shows it in the transcript", async () => {
     content: "Implement auth",
   });
   const output = await harness.frame();
-  expect(output).toContain("❯ Implement auth");
+  expectUserRow(output, "Implement auth");
   expect(output).toContain("Thinking…");
   expect(output).toContain("[stop]");
 });
@@ -249,24 +255,24 @@ test("tool calls render collapsed without a group title and expand on click", as
   client.receiveMessage(toolResult("t3", "alpha.txt"));
   const output = await harness.frame();
   expect(output).not.toContain("Tool Execution Group");
-  expect(output).toContain("🞂 Read src/server.ts");
-  expect(output).toContain("🞂 Edit src/auth.ts (+1 -1)");
-  expect(output).toContain("🞂 Bash ls");
+  expect(output).toContain("🞂Read src/server.ts");
+  expect(output).toContain("🞂Edit src/auth.ts (+1 -1)");
+  expect(output).toContain("🞂Bash ls");
   expect(output).not.toContain("authenticate()");
   expect(output).not.toContain("alpha.txt");
   expect(output).toContain("Executing…");
 
-  await clickText(harness, "🞂 Edit src/auth.ts");
+  await clickText(harness, "🞂Edit src/auth.ts");
   let expanded = await harness.frame();
-  expect(expanded).toContain("🞃 Edit src/auth.ts");
+  expect(expanded).toContain("🞃Edit src/auth.ts");
   expect(expanded).toMatch(/\+ export function authenticate\(\) \{\}/);
   expect(expanded).toMatch(/- function oldAuth\(\) \{\}/);
   expect(expanded).not.toContain("alpha.txt");
 
-  await clickText(harness, "🞂 Bash ls");
+  await clickText(harness, "🞂Bash ls");
   expect(await harness.frame()).toContain("alpha.txt");
 
-  await clickText(harness, "🞃 Edit src/auth.ts");
+  await clickText(harness, "🞃Edit src/auth.ts");
   expanded = await harness.frame();
   expect(expanded).not.toContain("authenticate()");
   expect(expanded).toContain("alpha.txt");
@@ -277,7 +283,7 @@ test("hovering a tool call header highlights it with the accent color", async ()
   await submit(harness, "run");
   harness.client.receiveMessage(assistantMessage("m1", [toolUse("t1", "Bash", { command: "ls" })]));
   const lines = (await harness.frame()).split("\n");
-  const row = lines.findIndex((line) => line.includes("🞂 Bash ls"));
+  const row = lines.findIndex((line) => line.includes("🞂Bash ls"));
   const column = (lines[row] ?? "").indexOf("Bash");
   const nameColor = async () => {
     await harness.frame();
@@ -297,8 +303,8 @@ test("each tool call shows its own execution time on the right", async () => {
   await submit(harness, "run");
   harness.client.receiveMessage(assistantMessage("m1", [toolUse("t1", "Bash", { command: "ls" })]));
   harness.client.receiveMessage(toolResult("t1", "ok"));
-  const line = (await harness.frame()).split("\n").find((row) => row.includes("🞂 Bash ls")) ?? "";
-  expect(line).toMatch(/🞂 Bash ls\s+\d+\.\ds\s*$/);
+  const line = (await harness.frame()).split("\n").find((row) => row.includes("🞂Bash ls")) ?? "";
+  expect(line).toMatch(/🞂Bash ls\s+\d+\.\ds\s*$/);
 });
 
 test("approval prompts can be answered with the keyboard", async () => {
@@ -610,8 +616,8 @@ test("ctrl+q queues and ctrl+w steers a prompt while the agent is busy", async (
     content: "third",
   });
   const output = await harness.frame();
-  expect(output).toContain("❯ second");
-  expect(output).toContain("❯ third");
+  expectUserRow(output, "second");
+  expectUserRow(output, "third");
 });
 
 test("ctrl+q and ctrl+w send a normal prompt when the agent is idle", async () => {
@@ -645,8 +651,8 @@ test("the status line shows the 5h and 7d rate limits with the time to reset", a
     },
   });
   const output = await harness.frame();
-  expect(output).toContain("➄ 23% █▒░░░ in 2h14m");
-  expect(output).toContain("❼ 41% ██░░░ in 3d4h");
+  expect(output).toContain("🯵h 23% █▒░░░ in 2h14m");
+  expect(output).toContain("🯷d 41% ██░░░ in 3d4h");
 });
 
 test("the status line below the editor shows settings and token usage", async () => {

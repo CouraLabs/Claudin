@@ -125,6 +125,7 @@ export function reduceUi(state: SessionState, event: UiEvent): SessionState {
     case "ui.question.recorded":
       return recordQuestionAnswer(state, event);
     case "ui.exit.requested":
+    case "ui.title.set":
       return state;
     case "ui.notice.posted":
       return appendNotice(state, event.text);

@@ -70,7 +70,6 @@ export async function startTui(
 ): Promise<CliRenderer> {
   const activeRenderer =
     options.renderer ?? (await createCliRenderer({ exitOnCtrlC: false, useMouse: true }));
-  activeRenderer.setTerminalTitle("Claudin")
   const store = new AppStore(client);
   const clipboard = options.clipboard ?? createHostClipboard();
   let syntaxStyle = createSyntaxStyle(activeRenderer);
@@ -196,7 +195,9 @@ export async function startTui(
     reactToEvent(store, event);
     notifier.notify(event);
     if (event.type === "ui.exit.requested") activeRenderer.destroy();
+    if (event.type === "ui.title.set") activeRenderer.setTerminalTitle(event.title);
   });
+  store.emit({ type: "ui.title.set", title: "Claudin" });
   const editor = {
     read: () => input.text,
     replace: (text: string) => input.replaceText(text, text.length),
