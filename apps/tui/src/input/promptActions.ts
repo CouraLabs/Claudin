@@ -60,6 +60,10 @@ export function answerApproval(
     requestAgent(store, { type: "agent.tool.approval.answered", toolUseId: target, decision });
 }
 
+export function stopTask(store: AppStore, taskId: string): void {
+  requestAgent(store, { type: "agent.task.stop.requested", taskId });
+}
+
 export function cancelTurn(store: AppStore): void {
   requestAgent(store, { type: "agent.prompt.cancel.requested" });
 }

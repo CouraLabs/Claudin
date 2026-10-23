@@ -61,6 +61,10 @@ export class ScriptedQuery implements AgentQuery {
     return undefined;
   }
 
+  async stopTask(taskId: string) {
+    this.calls.push(`stopTask:${taskId}`);
+  }
+
   async setModel(model?: string) {
     this.calls.push(`setModel:${model}`);
   }

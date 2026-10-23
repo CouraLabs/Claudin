@@ -24,6 +24,7 @@ import { PromptInput } from "./components/promptInput.ts";
 import { ScrollbackView } from "./components/scrollbackView.ts";
 import { SessionInfoBar } from "./components/sessionInfoBar.ts";
 import { StatusLine } from "./components/statusLine.ts";
+import { TaskPanel } from "./components/taskPanel.ts";
 import { ToastView } from "./components/toastView.ts";
 import { buildListView } from "./format/listViews.ts";
 import { isStatusBusy } from "./input/agentBusy.ts";
@@ -34,6 +35,7 @@ import {
   answerApproval,
   cancelTurn,
   type PromptDelivery,
+  stopTask,
   submitPrompt,
 } from "./input/promptActions.ts";
 import { createKeyPresses, routeKey } from "./input/routeKeys.ts";
@@ -82,6 +84,7 @@ export async function startTui(
   const backgroundPanel = new BackgroundPanel(activeRenderer);
   const toastView = new ToastView(activeRenderer);
   const statusLine = new StatusLine(activeRenderer, () => cancelTurn(store));
+  const taskPanel = new TaskPanel(activeRenderer, (taskId) => stopTask(store, taskId));
   const scrollback = new ScrollbackView(activeRenderer, {
     syntaxStyle,
     hooks: {
@@ -128,6 +131,7 @@ export async function startTui(
     scrollback,
     diffViewer,
     statusLine,
+    taskPanel,
     popover,
     backgroundPanel,
     input,
@@ -139,7 +143,7 @@ export async function startTui(
   activeRenderer.on("selection", (selection) => {
     void copySelection(store, activeRenderer, clipboard, selection);
   });
-  for (const part of [header, statusLine, popover, backgroundPanel, input, infoBar]) {
+  for (const part of [header, statusLine, taskPanel, popover, backgroundPanel, input, infoBar]) {
     part.renderable.onMouseScroll = ({ scroll }) => {
       if (scroll?.direction === "up") scrollback.scrollByLines(-1);
       if (scroll?.direction === "down") scrollback.scrollByLines(1);
@@ -170,6 +174,7 @@ export async function startTui(
     syncTheme(state);
     header.update(state);
     statusLine.update(state);
+    taskPanel.update(state);
     toastView.update(state);
     infoBar.update(state);
     scrollback.update(state);
@@ -219,7 +224,8 @@ export async function startTui(
   });
 
   const clock = setInterval(() => {
-    if (store.state.status !== "idle") store.emit({ type: "ui.clock.ticked", now: Date.now() });
+    const { status, tasks } = store.state;
+    if (status !== "idle" || tasks.length > 0) store.emit({ type: "ui.clock.ticked", now: Date.now() });
   }, CLOCK_INTERVAL_MS);
   let lastRateLimitAt = Date.now();
   const rateLimitPoll = setInterval(() => {

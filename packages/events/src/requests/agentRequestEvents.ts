@@ -58,6 +58,7 @@ export const agentRequestSchemas = [
   z.object({ type: z.literal("agent.prompt.queue.requested"), agentSessionId, content }),
   z.object({ type: z.literal("agent.prompt.steer.requested"), agentSessionId, content }),
   z.object({ type: z.literal("agent.prompt.cancel.requested"), agentSessionId }),
+  z.object({ type: z.literal("agent.task.stop.requested"), agentSessionId, taskId: z.string() }),
   z.object({
     type: z.literal("agent.tool.approval.answered"),
     agentSessionId,

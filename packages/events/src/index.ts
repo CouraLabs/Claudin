@@ -28,6 +28,7 @@ export * from "./responses/responseEvents.ts";
 export * from "./session/appEvent.ts";
 export * from "./session/eventMachine.ts";
 export * from "./session/eventSharing.ts";
+export * from "./session/runningTask.ts";
 export * from "./session/session.ts";
 export * from "./session/sessionState.ts";
 export * from "./session/sessionStore.ts";

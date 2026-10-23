@@ -8,12 +8,13 @@ import { reduceRateLimitEvent } from "./reduceRateLimit.ts";
 import { reduceResult } from "./reduceResult.ts";
 import { reduceStreamEvent } from "./reduceStreamEvent.ts";
 import { reduceTaskProgress } from "./reduceTaskProgress.ts";
+import { isTaskMessage, reduceTasks } from "./reduceTasks.ts";
 import { reduceToolResults } from "./reduceToolResults.ts";
 
 export function reduceAgentMessage(state: SessionState, message: SDKMessage): SessionState {
+  if (isTaskMessage(message)) return reduceTaskMessage(reduceTasks(state, message), message);
   switch (message.type) {
     case "system":
-      if (message.subtype === "task_progress") return reduceTaskProgress(state, message);
       if (message.subtype !== "init") return reduceNoticeMessage(state, message);
       return {
         ...state,
@@ -38,6 +39,16 @@ export function reduceAgentMessage(state: SessionState, message: SDKMessage): Se
     default:
       return reduceNoticeMessage(state, message);
   }
+}
+
+function reduceTaskMessage(state: SessionState, message: SDKMessage): SessionState {
+  if (message.type === "system" && message.subtype === "task_progress") {
+    return reduceTaskProgress(state, message);
+  }
+  if (message.type === "system" && message.subtype === "task_notification") {
+    return reduceNoticeMessage(state, message);
+  }
+  return state;
 }
 
 function reduceNoticeMessage(state: SessionState, message: SDKMessage): SessionState {

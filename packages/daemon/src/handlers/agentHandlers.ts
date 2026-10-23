@@ -49,6 +49,9 @@ export const agentHandlers: AgentHandlers = {
     await agents.requireSession(request.agentSessionId).cancel();
     yield { type: "agent.prompt.cancelled", agentSessionId: request.agentSessionId };
   },
+  async *"agent.task.stop.requested"({ agents }, request) {
+    await agents.requireSession(request.agentSessionId).stopTask(request.taskId);
+  },
   async *"agent.tool.approval.answered"({ agents }, request) {
     agents
       .requireSession(request.agentSessionId)

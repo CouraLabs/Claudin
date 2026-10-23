@@ -14,6 +14,7 @@ import type {
   Toast,
 } from "../requests/uiEvents.ts";
 import type { GitStats } from "../requests/workspaceEvents.ts";
+import type { RunningTask } from "./runningTask.ts";
 import type { SessionSummary } from "./sessionSummary.ts";
 import type {
   AgentStatus,
@@ -57,6 +58,7 @@ export type SessionState = {
   models: ModelInfo[];
   sessionList: SessionSummary[];
   queuedTurns: number;
+  tasks: RunningTask[];
   transcript: TranscriptEntry[];
   entryCounter: number;
   streamingMessageId?: string;
@@ -87,6 +89,7 @@ export const createSessionState = (sessionId: string): SessionState => ({
   models: [],
   sessionList: [],
   queuedTurns: 0,
+  tasks: [],
   transcript: [],
   entryCounter: 0,
   now: Date.now(),

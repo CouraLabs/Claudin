@@ -15,6 +15,7 @@ export type AgentQuery = McpLoginQuery &
     Query,
     | "next"
     | "interrupt"
+    | "stopTask"
     | "setModel"
     | "setPermissionMode"
     | "applyFlagSettings"

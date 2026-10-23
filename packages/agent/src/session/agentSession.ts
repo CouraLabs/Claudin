@@ -89,6 +89,10 @@ export class AgentSession {
     await this.query.interrupt();
   }
 
+  stopTask(taskId: string): Promise<void> {
+    return this.query.stopTask(taskId);
+  }
+
   async setModel(model: string): Promise<void> {
     await this.query.setModel(model);
     this.baseOptions = { ...this.baseOptions, model };

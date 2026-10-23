@@ -124,6 +124,12 @@ test("settings changes reach the query", async () => {
   ]);
 });
 
+test("stopping a task reaches the query", async () => {
+  const { runtime, session } = createFixture();
+  await session.stopTask("t1");
+  expect(runtime.queries[0]?.calls).toContain("stopTask:t1");
+});
+
 test("every session uses the shared profile tools and system prompt", () => {
   const { runtime } = createFixture();
   expect(runtime.queries[0]?.options).toMatchObject(AGENT_PROFILE_OPTIONS);
