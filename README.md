@@ -6,6 +6,8 @@ A local daemon owns the agent session. The TUI connects to it over WebSocket, so
 
 The agent uses an ADHD-shaped system prompt: replies lead with the next action, use numbered steps, and end with one concrete action. See `packages/agent/src/profile/adhdSystemPrompt.ts`.
 
+Built-in subagents handle focused work so the main agent keeps its context: Scout explores the codebase, CodeReview reviews changes against standards and spec, Coder writes production-grade code, and QA tests flows in a real browser through the browser-use skill.
+
 ## Requirements
 
 - Bun 1.4.3 (pinned in `package.json`)
@@ -43,7 +45,7 @@ Options: `-p, --port <port>` sets the daemon port (default `7777`).
 
 The daemon listens on `127.0.0.1` only and rejects browser origins. Every connection must present the daemon's access token and a run id that is generated when each `kraude` process starts. `kraude` on its own handles both for you. `kraude daemon` prints the token that each `kraude attach` needs.
 
-The daemon runs detached from the terminal, so closing one kraude never kills another client's session. Each kraude connects with its own run id and gets its own session; `attach` shares the live session instead. Launching `kraude` while a spawned daemon sits idle with no connected clients restarts that daemon with a fresh session. Manual `kraude daemon` processes are left alone and run until you stop them.
+The daemon runs detached from the terminal, so closing one client never kills another client's session. Each client connects with its own run id and gets its own session; `attach` shares the live session instead. Launching `kraude` while a spawned daemon sits idle with no connected clients restarts that daemon with a fresh session. Manual `kraude daemon` processes are left alone and run until you stop them.
 
 From source, run any command with `bun apps/cli/src/index.ts <command>`. For example: `bun apps/cli/src/index.ts daemon`.
 
