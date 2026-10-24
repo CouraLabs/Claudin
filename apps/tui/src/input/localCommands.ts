@@ -1,4 +1,9 @@
-import { effortLevelSchema, permissionModeSchema, themeNameSchema } from "@claudin/events";
+import {
+  DEFAULT_EFFORT,
+  effortLevelSchema,
+  permissionModeSchema,
+  themeNameSchema,
+} from "@kraude-kode/events";
 import type { AppStore } from "../store/appStore.ts";
 import { guardIdle } from "./agentBusy.ts";
 import { requestAgent } from "./agentRequest.ts";
@@ -7,6 +12,14 @@ import { type SlashCommand, WORKFLOW_COMMANDS } from "./workflowCommands.ts";
 
 export function openModelPicker(store: AppStore): void {
   requestAgent(store, { type: "agent.models.requested" });
+}
+
+export function cycleEffort(store: AppStore): void {
+  const levels = effortLevelSchema.options;
+  const current = store.state.effort || DEFAULT_EFFORT;
+  const index = levels.findIndex((level) => level === current);
+  const effort = levels[(index + 1) % levels.length] ?? DEFAULT_EFFORT;
+  requestAgent(store, { type: "agent.effort.set.requested", effort }, "ignore");
 }
 
 const QUIT_COMMAND: SlashCommand = {
@@ -36,6 +49,7 @@ export const SLASH_ALIASES: Record<string, string> = {
   "/exit": "/quit",
   "/q": "/quit",
   "/leave": "/quit",
+  "/new": "/clear",
 };
 
 export const SLASH_COMMANDS: Record<string, SlashCommand> = {
@@ -114,7 +128,7 @@ export const SLASH_COMMANDS: Record<string, SlashCommand> = {
     run: runMcpCommand,
   },
   "/clear": {
-    description: "Start a fresh session",
+    description: "Start a fresh session (also /new)",
     run(store) {
       store.request({ type: "session.create.requested" });
     },

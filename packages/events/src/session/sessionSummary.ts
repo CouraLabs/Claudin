@@ -1,5 +1,5 @@
-import type { AppEvent } from "./appEvent.ts";
 import { readPromptText } from "../models/messageText.ts";
+import type { AppEvent } from "./appEvent.ts";
 
 export type SessionSummary = {
   id: string;

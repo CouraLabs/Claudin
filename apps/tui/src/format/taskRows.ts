@@ -1,11 +1,9 @@
-import type { RunningTask } from "@claudin/events";
+import type { RunningTask } from "@kraude-kode/events";
 import { formatDuration, formatTokenCount } from "./formatMetrics.ts";
 import { SEPARATOR } from "./glyphs.ts";
 import { summarizeToolCall } from "./toolSummary.ts";
 
 export const MAX_TASK_ROWS = 5;
-
-const KIND_LABELS: Record<string, string> = { "general-purpose": "Agent", local_bash: "Bash" };
 
 export type TaskRow = {
   taskId: string;
@@ -35,9 +33,16 @@ const readDetail = (task: RunningTask): string => {
   return task.summary ?? describeLastTool(task) ?? "Starting...";
 };
 
+const pascalKind = (kind: string): string =>
+  kind
+    .split(/[-_ ]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join("");
+
 export const buildTaskRow = (task: RunningTask, now: number): TaskRow => ({
   taskId: task.id,
-  kind: KIND_LABELS[task.kind] ?? task.kind,
+  kind: pascalKind(task.kind),
   model: task.model ?? "",
   title: task.description,
   stats: [formatDuration(Math.max(now - task.startedAt, 0)), `↓${formatTokenCount(task.tokens)}`]

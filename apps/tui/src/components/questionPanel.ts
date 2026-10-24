@@ -1,4 +1,4 @@
-import { OTHER_LABEL, type QuestionDraft, readCurrentQuestion } from "@claudin/events";
+import { OTHER_LABEL, type QuestionDraft, readCurrentQuestion } from "@kraude-kode/events";
 import {
   BoxRenderable,
   bold,

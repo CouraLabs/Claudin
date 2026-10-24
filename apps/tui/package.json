@@ -1,5 +1,5 @@
 {
-  "name": "@claudin/tui",
+  "name": "@kraude-kode/tui",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -15,8 +15,8 @@
     "test": "bunx --bun vitest run --config ../../vitest.config.ts --root ."
   },
   "dependencies": {
-    "@claudin/daemon": "workspace:*",
-    "@claudin/events": "workspace:*",
+    "@kraude-kode/daemon": "workspace:*",
+    "@kraude-kode/events": "workspace:*",
     "@opentui/core": "^0.6.6",
     "diff": "^9.0.0"
   }

@@ -10,3 +10,8 @@ export function shortenPath(path: string, maxLength = 32): string {
   const tilded = tildePath(path);
   return tilded.length > maxLength ? `…${tilded.slice(-(maxLength - 1))}` : tilded;
 }
+
+export function fileName(path: string): string {
+  const trimmed = path.replace(/[\\/]+$/, "");
+  return trimmed.split(/[\\/]/).pop() || path;
+}

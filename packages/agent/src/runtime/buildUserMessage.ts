@@ -1,5 +1,5 @@
 import type { SDKUserMessage } from "@anthropic-ai/claude-agent-sdk";
-import { type PromptContent, readPromptText } from "@claudin/events";
+import { type PromptContent, readPromptText } from "@kraude-kode/events";
 
 const isSlashCommand = (content: PromptContent): boolean =>
   readPromptText(content).trimStart().startsWith("/");

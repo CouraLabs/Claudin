@@ -1,4 +1,4 @@
-import type { SessionState } from "@claudin/events";
+import type { SessionState } from "@kraude-kode/events";
 import { BoxRenderable, type CliRenderer, StyledText, TextRenderable } from "@opentui/core";
 import { buildRateLimitChunks } from "../format/rateLimitChunks.ts";
 import { buildSessionInfoChunks } from "../format/sessionInfoChunks.ts";

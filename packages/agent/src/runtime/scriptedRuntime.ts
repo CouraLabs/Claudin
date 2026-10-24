@@ -41,6 +41,7 @@ export class ScriptedQuery implements AgentQuery {
   readonly calls: string[] = [];
   readonly serverStatuses: McpServerStatus[][] = [];
   loginUrl?: string;
+  emitsInterruptedResult = false;
   private output = pushable<SDKMessage>({ objectMode: true });
 
   constructor(
@@ -58,6 +59,7 @@ export class ScriptedQuery implements AgentQuery {
 
   async interrupt() {
     this.calls.push("interrupt");
+    if (this.emitsInterruptedResult) this.output.push(RESULT_MESSAGE);
     return undefined;
   }
 

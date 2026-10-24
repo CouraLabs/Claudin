@@ -78,6 +78,16 @@ export const agentResponseSchemas = [
     rateLimit: sdkValue<SDKControlGetUsageResponse["rate_limits"]>(),
   }),
   z.object({
+    type: z.literal("agent.rate_limit.wait.started"),
+    agentSessionId,
+    resetsAt: z.number(),
+  }),
+  z.object({
+    type: z.literal("agent.rate_limit.wait.ended"),
+    agentSessionId,
+    resumed: z.boolean(),
+  }),
+  z.object({
     type: z.literal("agent.files.rewound"),
     userMessageId: z.string(),
     filesChanged: z.array(z.string()),

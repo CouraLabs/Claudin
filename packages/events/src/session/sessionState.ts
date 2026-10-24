@@ -8,7 +8,6 @@ import type {
   Autocomplete,
   BackgroundEditor,
   DiffViewer,
-  FocusTarget,
   Picker,
   PromptHistory,
   Toast,
@@ -20,6 +19,7 @@ import type {
   AgentStatus,
   LastRun,
   RateLimits,
+  RateLimitWait,
   TokenUsage,
   TranscriptEntry,
 } from "./transcriptTypes.ts";
@@ -27,7 +27,6 @@ import type {
 export const DEFAULT_CONTEXT_WINDOW = 200_000;
 
 export type UiState = {
-  focus: FocusTarget;
   autocomplete: Autocomplete | null;
   picker: Picker | null;
   backgroundEditor: BackgroundEditor | null;
@@ -54,6 +53,7 @@ export type SessionState = {
   tokens: TokenUsage;
   costUsd: number;
   rateLimits: RateLimits;
+  rateLimitWait?: RateLimitWait;
   slashCommands: SlashCommand[];
   models: ModelInfo[];
   sessionList: SessionSummary[];
@@ -96,7 +96,6 @@ export const createSessionState = (sessionId: string): SessionState => ({
   entryCounter: 0,
   now: Date.now(),
   ui: {
-    focus: "input",
     autocomplete: null,
     picker: null,
     backgroundEditor: null,

@@ -1,26 +1,27 @@
 import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { FileSessionStore, type RequestEvent } from "@claudin/events";
+import { FileSessionStore } from "@kraude-kode/events";
 import { expect, test } from "vitest";
 import { createDaemonContext, type DaemonContext } from "../server/daemonContext.ts";
 import { handleRequest } from "../server/handleRequest.ts";
+import type { HandledRequest } from "../server/requestHandler.ts";
 import { rankFiles } from "../workspace/searchWorkspaceFiles.ts";
 
 async function createWorkspace() {
-  const cwd = await mkdtemp(join(tmpdir(), "claudin-ws-"));
+  const cwd = await mkdtemp(join(tmpdir(), "kraude-ws-"));
   await mkdir(join(cwd, "src"));
   await mkdir(join(cwd, "node_modules"));
   await writeFile(join(cwd, "src", "app.ts"), "");
   await writeFile(join(cwd, "src", "server.ts"), "");
   await writeFile(join(cwd, "node_modules", "skip.ts"), "");
-  const store = new FileSessionStore(await mkdtemp(join(tmpdir(), "claudin-")));
+  const store = new FileSessionStore(await mkdtemp(join(tmpdir(), "kraude-")));
   const context = await createDaemonContext(store);
   context.cwd = cwd;
   return context;
 }
 
-async function collect(context: DaemonContext, request: RequestEvent) {
+async function collect(context: DaemonContext, request: HandledRequest) {
   const responses = [];
   for await (const response of handleRequest(context, request)) responses.push(response);
   return responses;

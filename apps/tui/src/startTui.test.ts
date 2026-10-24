@@ -1,8 +1,8 @@
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { DaemonEvent, DaemonEventListener, EventClient } from "@claudin/daemon/client";
-import type { RequestEvent } from "@claudin/events";
+import type { DaemonEvent, DaemonEventListener, EventClient } from "@kraude-kode/daemon/client";
+import type { RequestEvent } from "@kraude-kode/events";
 import { type ClipboardReadResult, type HostClipboardService, rgbToHex } from "@opentui/core";
 import { createTestRenderer } from "@opentui/core/testing";
 import { afterEach, expect, test } from "vitest";
@@ -70,7 +70,7 @@ async function createHarness(width = 100, height = 32, options: TuiOptions = {})
     kittyKeyboard: true,
   });
   setup.renderer.setTerminalTitle = () => {};
-  const historyPath = join(await mkdtemp(join(tmpdir(), "claudin-history-")), "history.jsonl");
+  const historyPath = join(await mkdtemp(join(tmpdir(), "kraude-history-")), "history.jsonl");
   await startTui(client, { renderer: setup.renderer, historyPath, ...options });
   client.receive({
     type: "workspace.info.received",
@@ -137,7 +137,7 @@ test("startup asks for workspace info and an agent session", async () => {
   for (const expected of [
     "/work/app",
     "main",
-    "Claude Haiku 5.5 (shift+tab) ⋅ ⣤ high ⋅ $0.000 ⋅ ⛉ Bypass",
+    "Claude Haiku 5.5 (shift+tab) ⋅ ◑ high (tab) ⋅ $0.000 ⋅ ⛉ Bypass",
   ]) {
     expect(output).toContain(expected);
   }
@@ -157,12 +157,12 @@ test("the label shows the model and effort and follows /effort", async () => {
     cwd: "/work/app",
     permissionMode: "default",
   });
-  expect(await harness.frame()).toContain("Claude Sonnet 5.5 (shift+tab) ⋅ ⣤ high");
+  expect(await harness.frame()).toContain("Claude Sonnet 5.5 (shift+tab) ⋅ ◑ high (tab)");
   await submit(harness, "/effort max");
   expect(harness.client.lastOfType("agent.effort.set.requested")?.effort).toBe("max");
   harness.client.receive({ type: "agent.effort.changed", effort: "max" });
   const output = await harness.frame();
-  expect(output).toContain("Claude Sonnet 5.5 (shift+tab) ⋅ ⣿ max");
+  expect(output).toContain("Claude Sonnet 5.5 (shift+tab) ⋅ ● max (tab)");
 });
 
 test("submitting sends the prompt and shows it in the transcript", async () => {
@@ -255,16 +255,16 @@ test("tool calls render collapsed without a group title and expand on click", as
   client.receiveMessage(toolResult("t3", "alpha.txt"));
   const output = await harness.frame();
   expect(output).not.toContain("Tool Execution Group");
-  expect(output).toContain("🞂Read src/server.ts");
-  expect(output).toContain("🞂Edit src/auth.ts (+1 -1)");
+  expect(output).toContain("🞂Read server.ts");
+  expect(output).toContain("🞂Edit auth.ts (+1 -1)");
   expect(output).toContain("🞂Bash ls");
   expect(output).not.toContain("authenticate()");
   expect(output).not.toContain("alpha.txt");
   expect(output).toContain("Executing…");
 
-  await clickText(harness, "🞂Edit src/auth.ts");
+  await clickText(harness, "🞂Edit auth.ts");
   let expanded = await harness.frame();
-  expect(expanded).toContain("🞃Edit src/auth.ts");
+  expect(expanded).toContain("🞃Edit auth.ts");
   expect(expanded).toMatch(/\+ export function authenticate\(\) \{\}/);
   expect(expanded).toMatch(/- function oldAuth\(\) \{\}/);
   expect(expanded).not.toContain("alpha.txt");
@@ -272,7 +272,7 @@ test("tool calls render collapsed without a group title and expand on click", as
   await clickText(harness, "🞂Bash ls");
   expect(await harness.frame()).toContain("alpha.txt");
 
-  await clickText(harness, "🞃Edit src/auth.ts");
+  await clickText(harness, "🞃Edit auth.ts");
   expanded = await harness.frame();
   expect(expanded).not.toContain("authenticate()");
   expect(expanded).toContain("alpha.txt");
@@ -592,14 +592,16 @@ test("shift+enter inserts a newline and grows the input", async () => {
   expect(harness.client.lastOfType("agent.prompt.requested")?.content).toBe("line one\nline two");
 });
 
-test("tab cycles focus between the input and the scrollback", async () => {
+test("tab cycles the effort level", async () => {
   const harness = await createHarness();
   harness.mockInput.pressTab();
-  await harness.mockInput.typeText("zz");
-  expect(await harness.frame()).not.toContain("zz");
+  expect(harness.client.lastOfType("agent.effort.set.requested")?.effort).toBe("xhigh");
+  harness.client.receive({ type: "agent.effort.changed", effort: "xhigh" });
   harness.mockInput.pressTab();
-  await harness.mockInput.typeText("yy");
-  expect(await harness.frame()).toContain("yy");
+  expect(harness.client.lastOfType("agent.effort.set.requested")?.effort).toBe("max");
+  harness.client.receive({ type: "agent.effort.changed", effort: "max" });
+  harness.mockInput.pressTab();
+  expect(harness.client.lastOfType("agent.effort.set.requested")?.effort).toBe("low");
 });
 
 const countSentPrompts = (harness: Awaited<ReturnType<typeof createHarness>>): number =>
@@ -1218,7 +1220,7 @@ test("pasting a big chunk of text shows a placeholder and sends the full text", 
 });
 
 test("pasting an image file path attaches the image as a block", async () => {
-  const path = `${tmpdir()}/claudin-paste-test.png`;
+  const path = `${tmpdir()}/kraude-paste-test.png`;
   await Bun.write(path, new Uint8Array([137, 80, 78, 71]));
   const harness = await createHarness();
   await harness.mockInput.pasteBracketedText(path);

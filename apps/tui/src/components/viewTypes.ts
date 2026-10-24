@@ -1,4 +1,4 @@
-import type { SessionState } from "@claudin/events";
+import type { SessionState } from "@kraude-kode/events";
 import type { Renderable } from "@opentui/core";
 
 export interface EntryView<Entry> {

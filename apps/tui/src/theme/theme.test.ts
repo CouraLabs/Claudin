@@ -1,4 +1,4 @@
-import { DEFAULT_THEME_NAME, THEME_NAMES } from "@claudin/events";
+import { DEFAULT_THEME_NAME, THEME_NAMES } from "@kraude-kode/events";
 import { rgbToHex } from "@opentui/core";
 import { expect, test } from "vitest";
 import { applyTheme, Theme } from "./colors.ts";

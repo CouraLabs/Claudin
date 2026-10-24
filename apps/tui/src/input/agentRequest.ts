@@ -1,4 +1,4 @@
-import type { RequestEvent } from "@claudin/events";
+import type { RequestEvent } from "@kraude-kode/events";
 import type { AppStore } from "../store/appStore.ts";
 
 type AgentRequest = Extract<RequestEvent, { agentSessionId: string }>;

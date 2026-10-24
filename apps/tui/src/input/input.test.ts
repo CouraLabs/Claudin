@@ -1,8 +1,9 @@
-import type { EventClient } from "@claudin/daemon/client";
-import type { RequestEvent } from "@claudin/events";
+import type { EventClient } from "@kraude-kode/daemon/client";
+import type { RequestEvent } from "@kraude-kode/events";
 import { expect, test } from "vitest";
 import { AppStore } from "../store/appStore.ts";
 import { applyCompletion, detectAutocomplete } from "./autocomplete.ts";
+import { cycleEffort } from "./localCommands.ts";
 import { answerApproval, cancelTurn, submitPrompt } from "./promptActions.ts";
 import { listSlashCommands } from "./slashCatalog.ts";
 
@@ -160,8 +161,48 @@ test("submits prompts, slash commands and approvals", () => {
   expect(sent.at(-1)).toMatchObject({ type: "agent.mcp.status.requested" });
   submitPrompt(store, "/clear");
   expect(sent.at(-1)).toMatchObject({ type: "session.create.requested" });
+  submitPrompt(store, "/new");
+  expect(sent.at(-1)).toMatchObject({ type: "session.create.requested" });
   submitPrompt(store, "/nope");
   expect(store.state.transcript.at(-1)).toMatchObject({ text: "Unknown command: /nope" });
+});
+
+test("cycleEffort advances the effort level and wraps from max to low", () => {
+  const sent: RequestEvent[] = [];
+  let respond: (event: unknown) => void = () => {};
+  const client: EventClient = {
+    send: (request) => sent.push(request),
+    subscribe: (listener) => {
+      respond = listener as (event: unknown) => void;
+      return () => {};
+    },
+    close: () => {},
+  };
+  const store = new AppStore(client);
+  respond({ type: "agent.session.created", agentSessionId: "a1" });
+
+  cycleEffort(store);
+  expect(sent.at(-1)).toEqual({
+    type: "agent.effort.set.requested",
+    agentSessionId: "a1",
+    effort: "xhigh",
+  });
+
+  respond({ type: "agent.effort.changed", effort: "max" });
+  cycleEffort(store);
+  expect(sent.at(-1)).toEqual({
+    type: "agent.effort.set.requested",
+    agentSessionId: "a1",
+    effort: "low",
+  });
+});
+
+test("cycleEffort stays silent when there is no agent session", () => {
+  const { store, sent } = createStore();
+  const before = store.state.transcript.length;
+  cycleEffort(store);
+  expect(store.state.transcript.length).toBe(before);
+  expect(sent).toEqual([]);
 });
 
 test("every agent action reports a missing agent session the same way", () => {

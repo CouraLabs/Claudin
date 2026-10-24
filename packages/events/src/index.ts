@@ -21,6 +21,7 @@ export type { RawRateLimits } from "./reducers/reduceRateLimit.ts";
 export * from "./reducers/reduceSessionState.ts";
 export * from "./reducers/toolGroups.ts";
 export * from "./requests/agentRequestEvents.ts";
+export * from "./requests/daemonEvents.ts";
 export * from "./requests/optionsEvents.ts";
 export * from "./requests/requestEvents.ts";
 export * from "./requests/uiEvents.ts";

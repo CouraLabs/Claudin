@@ -1,4 +1,4 @@
-import { countPatchLines, type ToolCall } from "@claudin/events";
+import { countPatchLines, type ToolCall } from "@kraude-kode/events";
 import { createPatch } from "diff";
 import { detectFiletype } from "./detectFiletype.ts";
 

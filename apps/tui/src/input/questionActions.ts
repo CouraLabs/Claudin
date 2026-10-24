@@ -1,4 +1,4 @@
-import { buildDraftAnswer, isLastQuestion, readCurrentQuestion } from "@claudin/events";
+import { buildDraftAnswer, isLastQuestion, readCurrentQuestion } from "@kraude-kode/events";
 import type { AppStore } from "../store/appStore.ts";
 import { requestAgent } from "./agentRequest.ts";
 

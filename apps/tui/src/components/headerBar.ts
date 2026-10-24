@@ -1,4 +1,4 @@
-import { countContextTokens, type SessionState } from "@claudin/events";
+import { countContextTokens, type SessionState } from "@kraude-kode/events";
 import {
   BoxRenderable,
   type CliRenderer,
@@ -18,16 +18,15 @@ const joinSegments = (segments: TextChunk[][]): TextChunk[] =>
   );
 
 function buildLocationChunks({ cwd, gitBranch, gitStats }: SessionState): TextChunk[] {
-  const segments: TextChunk[][] = [[fg(Theme.accent.highlight)(cwd ? tildePath(cwd) : "…")]];
+  const segments: TextChunk[][] = [[fg(Theme.fg.secondary)(cwd ? tildePath(cwd) : "…")]];
   if (gitBranch) {
-    segments.push(
-      [fg(Theme.accent.highlight)(`${BRANCH_GLYPH} ${gitBranch}`)],
-      [
-        fg(Theme.status.success)(`+${gitStats.additions}`),
-        fg(Theme.fg.muted)(" "),
-        fg(Theme.status.danger)(`-${gitStats.deletions}`),
-      ],
-    );
+    segments.push([
+      fg(Theme.accent.highlight)(`${BRANCH_GLYPH} ${gitBranch}`),
+      fg(Theme.fg.muted)(" "),
+      fg(Theme.status.success)(`+${gitStats.additions}`),
+      fg(Theme.fg.muted)(" "),
+      fg(Theme.status.danger)(`-${gitStats.deletions}`),
+    ]);
   }
   return joinSegments(segments);
 }

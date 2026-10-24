@@ -1,4 +1,4 @@
-import { DEFAULT_EFFORT, type PermissionMode } from "@claudin/events";
+import { DEFAULT_EFFORT, type PermissionMode } from "@kraude-kode/events";
 import type { AppStore } from "../store/appStore.ts";
 import { requestAgent } from "./agentRequest.ts";
 

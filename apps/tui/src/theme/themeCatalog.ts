@@ -1,4 +1,4 @@
-import type { ThemeName } from "@claudin/events";
+import type { ThemeName } from "@kraude-kode/events";
 import aura from "./assets/aura.json" with { type: "json" };
 import ayu from "./assets/ayu.json" with { type: "json" };
 import carbonfox from "./assets/carbonfox.json" with { type: "json" };

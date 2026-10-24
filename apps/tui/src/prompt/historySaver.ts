@@ -1,4 +1,4 @@
-import { queuePromptHistory } from "@claudin/events";
+import { queuePromptHistory } from "@kraude-kode/events";
 import { writeHistoryFile } from "./historyFile.ts";
 
 const SAVE_DELAY_MS = 400;

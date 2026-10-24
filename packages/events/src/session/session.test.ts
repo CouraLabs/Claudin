@@ -6,7 +6,7 @@ import { restoreSession, startSession } from "./session.ts";
 import { FileSessionStore } from "./sessionStore.ts";
 
 test("session persists events and holds state", async () => {
-  const directory = await mkdtemp(join(tmpdir(), "claudin-"));
+  const directory = await mkdtemp(join(tmpdir(), "kraude-"));
   const session = await startSession(new FileSessionStore(directory));
   await session.dispatch({ type: "agent.prompt.requested", agentSessionId: "a", content: "hi" });
 
@@ -16,13 +16,13 @@ test("session persists events and holds state", async () => {
 });
 
 test("new sessions get distinct ids", async () => {
-  const store = new FileSessionStore(await mkdtemp(join(tmpdir(), "claudin-")));
+  const store = new FileSessionStore(await mkdtemp(join(tmpdir(), "kraude-")));
   const [first, second] = await Promise.all([startSession(store), startSession(store)]);
   expect(first.id).not.toBe(second.id);
 });
 
 test("a stored session restores its state without rewriting the log", async () => {
-  const store = new FileSessionStore(await mkdtemp(join(tmpdir(), "claudin-")));
+  const store = new FileSessionStore(await mkdtemp(join(tmpdir(), "kraude-")));
   const original = await startSession(store);
   await original.dispatch({ type: "agent.prompt.requested", agentSessionId: "a", content: "hi" });
   await original.dispatch({ type: "agent.session.created", agentSessionId: "a" });
@@ -40,12 +40,12 @@ test("a stored session restores its state without rewriting the log", async () =
 });
 
 test("restoring an unknown session fails", async () => {
-  const store = new FileSessionStore(await mkdtemp(join(tmpdir(), "claudin-")));
+  const store = new FileSessionStore(await mkdtemp(join(tmpdir(), "kraude-")));
   await expect(restoreSession(store, "missing")).rejects.toThrow("Unknown session: missing");
 });
 
 test("listing summarises stored sessions with prompts, newest first", async () => {
-  const store = new FileSessionStore(await mkdtemp(join(tmpdir(), "claudin-")));
+  const store = new FileSessionStore(await mkdtemp(join(tmpdir(), "kraude-")));
   const empty = await startSession(store);
   const older = await startSession(store);
   await older.dispatch({
@@ -77,6 +77,6 @@ test("listing summarises stored sessions with prompts, newest first", async () =
 });
 
 test("listing an empty store returns nothing", async () => {
-  const store = new FileSessionStore(join(tmpdir(), "claudin-missing-dir"));
+  const store = new FileSessionStore(join(tmpdir(), "kraude-missing-dir"));
   expect(await store.list()).toEqual([]);
 });

@@ -1,10 +1,10 @@
 ---
-description: Build claudin, publish it to npm, create the GitHub release, announce the version on Discord and commit and push the version bump
+description: Build kraude, publish it to npm, create the GitHub release, announce the version on Discord and commit and push the version bump
 argument-hint: "[patch|minor|major] [--dry-run]"
 allowed-tools: Bash(bun scripts/promotion.ts:*), Bash(git status:*), Bash(git diff:*), Bash(git add package.json), Bash(git commit:*), Bash(git push:*), Bash(gh release:*)
 ---
 
-Publish a new claudin version.
+Publish a new kraude version.
 
 1. Run `git status --short` and tell me if there are uncommitted changes before publishing.
 2. Run `bun scripts/promotion.ts $ARGUMENTS` (the bump defaults to `patch`; add `--dry-run` to skip publishing, the GitHub release and Discord).

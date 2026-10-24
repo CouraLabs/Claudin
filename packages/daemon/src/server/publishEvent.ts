@@ -1,4 +1,4 @@
-import { type AppEvent, type DaemonMessage, isSharedEvent } from "@claudin/events";
+import { type AppEvent, type DaemonMessage, isSharedEvent } from "@kraude-kode/events";
 import type { WebSocket } from "ws";
 
 export function publishEvent(

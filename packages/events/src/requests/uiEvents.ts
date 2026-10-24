@@ -2,8 +2,6 @@ import type { BackgroundColor } from "../models/backgroundColor.ts";
 import type { FileDiff } from "../models/fileDiff.ts";
 import type { PromptContent } from "../models/sdkValue.ts";
 
-export type FocusTarget = "input" | "scrollback";
-
 export type AutocompleteKind = "slash" | "file";
 
 export type Autocomplete = {
@@ -26,8 +24,6 @@ export type DiffViewer = { files: FileDiff[]; selected: number };
 export type Toast = { id: string; text: string };
 
 export type UiEvent =
-  | { type: "ui.focus.changed"; focus: FocusTarget }
-  | { type: "ui.focus.cycled"; direction: 1 | -1 }
   | { type: "ui.tool.toggled"; callId: string }
   | { type: "ui.autocomplete.changed"; autocomplete: Autocomplete | null }
   | { type: "ui.autocomplete.moved"; delta: 1 | -1 }

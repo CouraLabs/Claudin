@@ -1,4 +1,4 @@
-import type { DiffViewer, SessionState } from "@claudin/events";
+import type { DiffViewer, SessionState } from "@kraude-kode/events";
 import {
   BoxRenderable,
   type CliRenderer,

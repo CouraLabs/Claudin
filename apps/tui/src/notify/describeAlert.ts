@@ -1,4 +1,4 @@
-import type { AppEvent } from "@claudin/events";
+import type { AppEvent } from "@kraude-kode/events";
 
 type ResultLike = { type?: string; is_error?: boolean };
 

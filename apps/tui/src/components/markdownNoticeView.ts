@@ -1,4 +1,4 @@
-import type { TranscriptEntry } from "@claudin/events";
+import type { TranscriptEntry } from "@kraude-kode/events";
 import { type CliRenderer, MarkdownRenderable, type SyntaxStyle } from "@opentui/core";
 import type { EntryView } from "./viewTypes.ts";
 

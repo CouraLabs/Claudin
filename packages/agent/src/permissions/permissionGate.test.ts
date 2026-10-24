@@ -1,4 +1,4 @@
-import type { ResponseEvent } from "@claudin/events";
+import type { ResponseEvent } from "@kraude-kode/events";
 import { expect, test } from "vitest";
 import { PermissionGate } from "./permissionGate.ts";
 

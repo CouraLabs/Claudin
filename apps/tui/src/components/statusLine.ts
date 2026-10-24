@@ -1,4 +1,4 @@
-import type { LastRun, SessionState } from "@claudin/events";
+import type { LastRun, SessionState } from "@kraude-kode/events";
 import {
   BoxRenderable,
   bold,
@@ -68,13 +68,14 @@ export class StatusLine {
       return;
     }
     this.renderable.visible = true;
-    const label = agentLabel(state.status);
+    const label = agentLabel(state.status, state.rateLimitWait?.resetsAt, state.now);
     const busy = label.icon === undefined;
     const frame = SPINNER_FRAMES[Math.floor(state.now / SPINNER_STEP_MS) % SPINNER_FRAMES.length];
     const elapsed = state.turnStartedAt ? formatDuration(state.now - state.turnStartedAt) : "";
+    const tickable = state.status === "rate_limited";
     this.label.content = new StyledText([
       fg(label.color)(`${busy ? frame : label.icon} ${label.text}`),
-      ...(busy ? [dim(fg(Theme.fg.muted)(" (esc esc)"))] : []),
+      ...(busy || tickable ? [dim(fg(Theme.fg.muted)(" (esc esc)"))] : []),
     ]);
     const showStats = state.status !== "error";
     this.stats.content = showStats

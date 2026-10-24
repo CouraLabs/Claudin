@@ -8,6 +8,8 @@ import type { SessionStore } from "./sessionStore.ts";
 type RestoredEvent = Extract<ResponseEvent, { type: "session.restored" }>;
 
 const TRANSIENT_TYPES = new Set([
+  "daemon.status.requested",
+  "daemon.status.received",
   "session.restored",
   "session.forked",
   "session.synced",

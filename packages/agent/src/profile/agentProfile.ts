@@ -3,7 +3,7 @@ import {
   BATCH_EDIT_BASE_NAME,
   BATCH_EDIT_TOOL_NAME,
   DEFAULT_PERMISSION_MODE,
-} from "@claudin/events";
+} from "@kraude-kode/events";
 import { CUSTOM_MCP_SERVERS } from "../tools/customToolsServer.ts";
 import { AGENT_SYSTEM_PROMPT } from "./agentSystemPrompt.ts";
 import { AGENT_DISALLOWED_TOOLS, AGENT_TOOLS } from "./agentTools.ts";
@@ -54,7 +54,7 @@ export const AGENT_PROFILE_OPTIONS: Pick<
     syncClaudeAiSkills: false,
     enableAllProjectMcpServers: true,
     promptCacheTtl: "1h",
-    subagentPromptCacheTtl: "5m",
+    subagentPromptCacheTtl: "1h",
     viewMode: "verbose",
     attribution: { commit: "", pr: "" },
   },

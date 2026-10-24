@@ -2,7 +2,7 @@ export const SEPARATOR = " ⋅ ";
 
 export const CONTEXT_GLYPH = "⛁";
 
-export const BRANCH_GLYPH = "⎇";
+export const BRANCH_GLYPH = "⌥";
 
 export const TOOL_GLYPH = "◆";
 
@@ -17,6 +17,8 @@ export const DONE_GLYPH = "✓";
 
 export const ERROR_GLYPH = "✖";
 
+export const LIMIT_GLYPH = "⏳";
+
 const BRAILLE_BASE = 0x2800;
 
 const brailleCodeOffset = (index: number): number =>
@@ -29,16 +31,18 @@ export const SPINNER_FRAMES = Array.from({ length: 256 }, (_, index) =>
   String.fromCodePoint(BRAILLE_BASE + brailleCodeOffset(index)),
 );
 
+export const TASK_SPINNER_FRAMES = ["∙∙∙", "●∙∙", "∙●∙", "∙∙●", "∙∙∙"] as const;
+
 export const GAUGE_GLYPHS = ["░", "▒", "▓", "█"] as const;
 
 export const PERMISSION_GLYPH = "⛉";
 
 export const EFFORT_GLYPHS: Record<string, string> = {
-  low: "⡀",
-  medium: "⣀",
-  high: "⣤",
-  xhigh: "⣶",
-  max: "⣿",
+  low: "○",
+  medium: "◔",
+  high: "◑",
+  xhigh: "◕",
+  max: "●",
 };
 
 export const TOKEN_GLYPHS = {

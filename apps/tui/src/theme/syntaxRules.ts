@@ -14,14 +14,25 @@ export const buildMutedSyntaxRules = (palette: Palette): ThemeTokenStyle[] =>
     style: { ...style, foreground: palette.fg.muted },
   }));
 
-export const buildSyntaxRules = ({ fg, status, syntax, markdown, diff, bg }: Palette): ThemeTokenStyle[] => [
+export const buildSyntaxRules = ({
+  fg,
+  status,
+  syntax,
+  markdown,
+  diff,
+  bg,
+}: Palette): ThemeTokenStyle[] => [
   rule(["default"], fg.primary),
   rule(["comment", "comment.documentation"], syntax.comment, { italic: true }),
   rule(["string", "symbol", "character.special", "character"], syntax.string),
   rule(["number", "boolean", "constant", "float"], syntax.number),
-  rule(["keyword.return", "keyword.conditional", "keyword.repeat", "keyword.coroutine"], syntax.keyword, {
-    italic: true,
-  }),
+  rule(
+    ["keyword.return", "keyword.conditional", "keyword.repeat", "keyword.coroutine"],
+    syntax.keyword,
+    {
+      italic: true,
+    },
+  ),
   rule(["keyword.type"], syntax.type, { bold: true, italic: true }),
   rule(["keyword.function", "function.method"], syntax.function),
   rule(["keyword"], syntax.keyword, { italic: true }),
@@ -34,7 +45,15 @@ export const buildSyntaxRules = ({ fg, status, syntax, markdown, diff, bg }: Pal
     syntax.operator,
   ),
   rule(
-    ["variable", "variable.parameter", "function.method.call", "function.call", "property", "parameter", "field"],
+    [
+      "variable",
+      "variable.parameter",
+      "function.method.call",
+      "function.call",
+      "property",
+      "parameter",
+      "field",
+    ],
     syntax.variable,
   ),
   rule(["variable.member", "function", "constructor"], syntax.function),
@@ -42,13 +61,29 @@ export const buildSyntaxRules = ({ fg, status, syntax, markdown, diff, bg }: Pal
   rule(["type.definition"], syntax.type, { bold: true }),
   rule(["punctuation", "punctuation.bracket"], syntax.punctuation),
   rule(
-    ["variable.builtin", "type.builtin", "function.builtin", "module.builtin", "constant.builtin", "variable.super"],
+    [
+      "variable.builtin",
+      "type.builtin",
+      "function.builtin",
+      "module.builtin",
+      "constant.builtin",
+      "variable.super",
+    ],
     status.danger,
   ),
-  rule(["keyword.directive", "keyword.modifier", "keyword.exception"], syntax.keyword, { italic: true }),
+  rule(["keyword.directive", "keyword.modifier", "keyword.exception"], syntax.keyword, {
+    italic: true,
+  }),
   rule(["punctuation.special", "tag.delimiter"], syntax.operator),
   rule(
-    ["markup.heading", "markup.heading.2", "markup.heading.3", "markup.heading.4", "markup.heading.5", "markup.heading.6"],
+    [
+      "markup.heading",
+      "markup.heading.2",
+      "markup.heading.3",
+      "markup.heading.4",
+      "markup.heading.5",
+      "markup.heading.6",
+    ],
     markdown.heading,
     { bold: true },
   ),

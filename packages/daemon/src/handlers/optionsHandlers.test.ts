@@ -1,13 +1,14 @@
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { FileSessionStore, type RequestEvent } from "@claudin/events";
+import { FileSessionStore } from "@kraude-kode/events";
 import { expect, test } from "vitest";
 import { createDaemonContext } from "../server/daemonContext.ts";
 import { handleRequest } from "../server/handleRequest.ts";
+import type { HandledRequest } from "../server/requestHandler.ts";
 
 async function createContext() {
-  const directory = await mkdtemp(join(tmpdir(), "claudin-"));
+  const directory = await mkdtemp(join(tmpdir(), "kraude-"));
   const optionsPath = join(directory, "nested", "options.json");
   const store = new FileSessionStore(join(directory, "sessions"));
   return { optionsPath, context: await createDaemonContext(store, undefined, optionsPath) };
@@ -15,7 +16,7 @@ async function createContext() {
 
 async function collect(
   context: Awaited<ReturnType<typeof createContext>>["context"],
-  request: RequestEvent,
+  request: HandledRequest,
 ) {
   const responses = [];
   for await (const response of handleRequest(context, request)) responses.push(response);

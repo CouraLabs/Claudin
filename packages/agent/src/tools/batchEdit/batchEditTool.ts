@@ -1,5 +1,5 @@
 import { tool } from "@anthropic-ai/claude-agent-sdk";
-import { BATCH_EDIT_BASE_NAME } from "@claudin/events";
+import { BATCH_EDIT_BASE_NAME } from "@kraude-kode/events";
 import { batchEditShape } from "./batchEditSchema.ts";
 import { runBatchEdit } from "./runBatchEdit.ts";
 

@@ -1,6 +1,6 @@
 import { THEME_NAMES } from "../models/themeNames.ts";
 import { DEFAULT_EFFORT, effortLevelSchema } from "../requests/agentRequestEvents.ts";
-import type { FocusTarget, PickerKind, UiEvent } from "../requests/uiEvents.ts";
+import type { PickerKind, UiEvent } from "../requests/uiEvents.ts";
 import type { SessionState } from "../session/sessionState.ts";
 import { appendNotice } from "./appendEntry.ts";
 import { changeAutocomplete, moveAutocomplete } from "./reduceAutocomplete.ts";
@@ -24,14 +24,6 @@ import {
 import { dismissToast, postToast } from "./reduceToast.ts";
 import { isToolsEntry } from "./toolGroups.ts";
 import { wrapIndex } from "./wrapIndex.ts";
-
-const FOCUS_ORDER: FocusTarget[] = ["input", "scrollback"];
-
-function cycleFocus(state: SessionState, direction: 1 | -1): SessionState {
-  const current = FOCUS_ORDER.indexOf(state.ui.focus);
-  const next = FOCUS_ORDER[wrapIndex(current + direction, FOCUS_ORDER.length)] ?? "input";
-  return { ...state, ui: { ...state.ui, focus: next } };
-}
 
 const toggleTool = (state: SessionState, callId: string): SessionState => ({
   ...state,
@@ -86,10 +78,6 @@ function openRewindPicker(state: SessionState): SessionState {
 
 export function reduceUi(state: SessionState, event: UiEvent): SessionState {
   switch (event.type) {
-    case "ui.focus.changed":
-      return { ...state, ui: { ...state.ui, focus: event.focus } };
-    case "ui.focus.cycled":
-      return cycleFocus(state, event.direction);
     case "ui.tool.toggled":
       return toggleTool(state, event.callId);
     case "ui.autocomplete.changed":

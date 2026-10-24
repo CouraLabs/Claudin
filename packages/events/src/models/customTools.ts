@@ -1,4 +1,4 @@
-export const CUSTOM_SERVER_NAME = "claudin";
+export const CUSTOM_SERVER_NAME = "kraude";
 
 export const BATCH_EDIT_BASE_NAME = "BatchEdit";
 

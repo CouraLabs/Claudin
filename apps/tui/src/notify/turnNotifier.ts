@@ -1,8 +1,8 @@
-import type { AppEvent } from "@claudin/events";
+import type { AppEvent } from "@kraude-kode/events";
 import type { CliRenderer } from "@opentui/core";
 import { describeAlert } from "./describeAlert.ts";
 
-const NOTIFICATION_TITLE = "Claudin";
+const NOTIFICATION_TITLE = "KraudeKode";
 
 function notifyMacDesktop(text: string): void {
   if (process.platform !== "darwin") return;

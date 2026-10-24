@@ -3,7 +3,7 @@ import {
   type QuestionDraft,
   stripCustomPrefix,
   type ToolCall,
-} from "@claudin/events";
+} from "@kraude-kode/events";
 import {
   BoxRenderable,
   bold,

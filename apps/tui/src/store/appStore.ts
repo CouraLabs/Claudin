@@ -1,4 +1,4 @@
-import type { DaemonEvent, EventClient } from "@claudin/daemon/client";
+import type { DaemonEvent, EventClient } from "@kraude-kode/daemon/client";
 import {
   type AppEvent,
   createSessionState,
@@ -8,7 +8,7 @@ import {
   reduceTimedEvent,
   type SessionState,
   type UiEvent,
-} from "@claudin/events";
+} from "@kraude-kode/events";
 
 export type StateListener = (state: SessionState) => void;
 

@@ -1,10 +1,10 @@
 import type { CanUseTool, PermissionResult } from "@anthropic-ai/claude-agent-sdk";
-import { type ApprovalDecision, askedQuestionsSchema, type ResponseEvent } from "@claudin/events";
+import { type ApprovalDecision, askedQuestionsSchema, type ResponseEvent } from "@kraude-kode/events";
 import { allowTool, denyTool } from "./permissionResults.ts";
 
 export const ASK_TOOL_NAME = "AskUserQuestion";
 
-const SAFE_TOOLS = new Set(["Read", "Glob", "Grep", "WebSearch", "WebFetch", "TodoWrite", "Agent"]);
+const SAFE_TOOLS = new Set(["Read", "Glob", "Grep", "WebSearch", "WebFetch", "Agent"]);
 
 const REJECTED_MESSAGE = "The user rejected this tool call.";
 const INVALID_MESSAGE = "The questions were malformed. Ask the user directly in plain text.";

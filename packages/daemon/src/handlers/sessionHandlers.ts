@@ -1,10 +1,10 @@
-import { renderTranscriptMarkdown } from "@claudin/events";
+import { renderTranscriptMarkdown } from "@kraude-kode/events";
 import type { RequestHandlers } from "../server/requestHandler.ts";
 import { resolveUserPath } from "../workspace/resolvePath.ts";
 
 type SessionRequestType = Extract<keyof RequestHandlers, `session.${string}`>;
 
-const exportFileName = (sessionId: string): string => `claudin-${sessionId.slice(0, 8)}.md`;
+const exportFileName = (sessionId: string): string => `kraude-${sessionId.slice(0, 8)}.md`;
 
 export const sessionHandlers: Pick<RequestHandlers, SessionRequestType> = {
   async *"session.create.requested"(context) {

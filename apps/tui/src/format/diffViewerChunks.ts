@@ -1,4 +1,4 @@
-import type { DiffViewer, FileDiff } from "@claudin/events";
+import type { DiffViewer, FileDiff } from "@kraude-kode/events";
 import { bold, dim, fg, type TextChunk } from "@opentui/core";
 import { Theme } from "../theme/colors.ts";
 import { SEPARATOR } from "./glyphs.ts";

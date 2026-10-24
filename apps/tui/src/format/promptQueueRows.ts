@@ -1,4 +1,4 @@
-import { type PromptContent, readPromptText } from "@claudin/events";
+import { type PromptContent, readPromptText } from "@kraude-kode/events";
 import { SEPARATOR } from "./glyphs.ts";
 import { truncateText } from "./truncateText.ts";
 

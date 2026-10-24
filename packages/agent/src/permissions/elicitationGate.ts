@@ -3,7 +3,7 @@ import type {
   ElicitationResult,
   OnElicitation,
 } from "@anthropic-ai/claude-agent-sdk";
-import type { AskedQuestion, ResponseEvent } from "@claudin/events";
+import type { AskedQuestion, ResponseEvent } from "@kraude-kode/events";
 import { openBrowser } from "../system/openBrowser.ts";
 import {
   buildElicitationContent,

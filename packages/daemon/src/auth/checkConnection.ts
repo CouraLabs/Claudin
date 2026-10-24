@@ -1,5 +1,6 @@
 import { timingSafeEqual } from "node:crypto";
 import type { IncomingMessage } from "node:http";
+import { readRequestParam } from "../server/requestParams.ts";
 
 export type Rejection = { status: number; reason: string };
 
@@ -10,7 +11,7 @@ const isSameSecret = (given: string, expected: string): boolean => {
 };
 
 export function readRunId(request: IncomingMessage): string | null {
-  return new URL(request.url ?? "/", "ws://127.0.0.1").searchParams.get("runId");
+  return readRequestParam(request, "runId") ?? null;
 }
 
 export function checkConnection(
@@ -19,11 +20,10 @@ export function checkConnection(
   liveRunIds: ReadonlySet<string>,
 ): Rejection | undefined {
   if (request.headers.origin) return { status: 403, reason: "Browser origins are not allowed" };
-  const params = new URL(request.url ?? "/", "ws://127.0.0.1").searchParams;
-  if (!isSameSecret(params.get("token") ?? "", token)) {
+  if (!isSameSecret(readRequestParam(request, "token") ?? "", token)) {
     return { status: 401, reason: "Invalid access token" };
   }
-  const runId = params.get("runId");
+  const runId = readRequestParam(request, "runId");
   if (!runId) return { status: 400, reason: "Missing run id" };
   if (liveRunIds.has(runId)) return { status: 409, reason: "Run id already connected" };
   return undefined;

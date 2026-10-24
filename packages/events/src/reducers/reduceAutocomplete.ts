@@ -1,5 +1,5 @@
-import type { SessionState } from "../session/sessionState.ts";
 import type { Autocomplete } from "../requests/uiEvents.ts";
+import type { SessionState } from "../session/sessionState.ts";
 import { wrapIndex } from "./wrapIndex.ts";
 
 export const changeAutocomplete = (

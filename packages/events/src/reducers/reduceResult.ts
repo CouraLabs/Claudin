@@ -1,6 +1,6 @@
 import type { SDKMessage } from "@anthropic-ai/claude-agent-sdk";
-import { appendNotice } from "./appendEntry.ts";
 import type { SessionState } from "../session/sessionState.ts";
+import { appendNotice } from "./appendEntry.ts";
 import { countTurnTools, settleOpenCalls } from "./toolGroups.ts";
 
 type ResultMessage = Extract<SDKMessage, { type: "result" }>;

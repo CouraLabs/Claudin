@@ -13,9 +13,11 @@ const agentOptions = sdkValue<Options>().optional();
 
 export const effortLevelSchema = z.enum(["low", "medium", "high", "xhigh", "max"]);
 
-export const DEFAULT_EFFORT = "high";
+export const DEFAULT_EFFORT: EffortLevel = "high";
 
 export const permissionModeSchema = z.enum(["auto", "acceptEdits", "bypassPermissions", "dontAsk"]);
+
+export type EffortLevel = z.infer<typeof effortLevelSchema>;
 
 export type PermissionMode = z.infer<typeof permissionModeSchema>;
 

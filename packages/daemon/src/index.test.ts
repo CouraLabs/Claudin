@@ -6,11 +6,12 @@ import {
   RESULT_MESSAGE,
   ScriptedRuntime,
   type ScriptedTurn,
-} from "@claudin/agent";
-import { FileSessionStore, type RequestEvent, startSession } from "@claudin/events";
+} from "@kraude-kode/agent";
+import { FileSessionStore, startSession } from "@kraude-kode/events";
 import { expect, test } from "vitest";
 import { createDaemonContext, type DaemonContext } from "./server/daemonContext.ts";
 import { handleRequest } from "./server/handleRequest.ts";
+import type { HandledRequest } from "./server/requestHandler.ts";
 
 function useScriptedAgents(context: DaemonContext, turn?: ScriptedTurn) {
   const runtime = new ScriptedRuntime(turn);
@@ -22,7 +23,7 @@ const countClosed = (runtime: ScriptedRuntime) =>
   runtime.queries.filter((query) => query.calls.includes("close")).length;
 
 test("session create request swaps the session", async () => {
-  const directory = await mkdtemp(join(tmpdir(), "claudin-"));
+  const directory = await mkdtemp(join(tmpdir(), "kraude-"));
   const context = await createDaemonContext(new FileSessionStore(directory));
   const firstId = context.session.id;
 
@@ -37,7 +38,7 @@ test("session create request swaps the session", async () => {
 });
 
 test("creating a session closes agent sessions and persists session.created once", async () => {
-  const store = new FileSessionStore(await mkdtemp(join(tmpdir(), "claudin-")));
+  const store = new FileSessionStore(await mkdtemp(join(tmpdir(), "kraude-")));
   const context = await createDaemonContext(store);
   const runtime = useScriptedAgents(context);
   context.agents.createSession();
@@ -53,7 +54,7 @@ test("creating a session closes agent sessions and persists session.created once
 
 test("cancel, approval and model requests reach the agent session", async () => {
   const context = await createDaemonContext(
-    new FileSessionStore(await mkdtemp(join(tmpdir(), "claudin-"))),
+    new FileSessionStore(await mkdtemp(join(tmpdir(), "kraude-"))),
   );
   const runtime = useScriptedAgents(context);
   context.agents.createSession({ sessionId: "a" });
@@ -81,7 +82,7 @@ test("cancel, approval and model requests reach the agent session", async () => 
 });
 
 test("restore request swaps in the stored session and replays its events", async () => {
-  const directory = await mkdtemp(join(tmpdir(), "claudin-"));
+  const directory = await mkdtemp(join(tmpdir(), "kraude-"));
   const store = new FileSessionStore(directory);
   const stored = await startSession(store);
   await stored.dispatch({ type: "agent.session.created", agentSessionId: "a1" });
@@ -98,7 +99,7 @@ test("restore request swaps in the stored session and replays its events", async
 });
 
 test("a daemon context can start from a stored session", async () => {
-  const store = new FileSessionStore(await mkdtemp(join(tmpdir(), "claudin-")));
+  const store = new FileSessionStore(await mkdtemp(join(tmpdir(), "kraude-")));
   const stored = await startSession(store);
   expect((await createDaemonContext(store, stored.id)).session.id).toBe(stored.id);
   await expect(createDaemonContext(store, "missing")).rejects.toThrow("Unknown session");
@@ -106,7 +107,7 @@ test("a daemon context can start from a stored session", async () => {
 
 test("model list and command requests reach the agent session", async () => {
   const context = await createDaemonContext(
-    new FileSessionStore(await mkdtemp(join(tmpdir(), "claudin-"))),
+    new FileSessionStore(await mkdtemp(join(tmpdir(), "kraude-"))),
   );
   const runtime = useScriptedAgents(context);
   runtime.models = ["haiku", "sonnet"].map((value) => ({ value })) as ScriptedRuntime["models"];
@@ -121,7 +122,7 @@ test("model list and command requests reach the agent session", async () => {
 });
 
 test("responses keep landing in the session that issued the request after a swap", async () => {
-  const store = new FileSessionStore(await mkdtemp(join(tmpdir(), "claudin-")));
+  const store = new FileSessionStore(await mkdtemp(join(tmpdir(), "kraude-")));
   const context = await createDaemonContext(store);
   useScriptedAgents(context);
   const issuing = context.session;
@@ -141,7 +142,7 @@ test("responses keep landing in the session that issued the request after a swap
 
 async function collect(
   context: Awaited<ReturnType<typeof createDaemonContext>>,
-  request: RequestEvent,
+  request: HandledRequest,
 ) {
   const responses = [];
   for await (const response of handleRequest(context, request)) responses.push(response);
@@ -149,8 +150,8 @@ async function collect(
 }
 
 test("cd starts a fresh session in the new directory and closes agents", async () => {
-  const directory = await mkdtemp(join(tmpdir(), "claudin-"));
-  const target = await realpath(await mkdtemp(join(tmpdir(), "claudin-cwd-")));
+  const directory = await mkdtemp(join(tmpdir(), "kraude-"));
+  const target = await realpath(await mkdtemp(join(tmpdir(), "kraude-cwd-")));
   await mkdir(join(target, "sub"));
   const context = await createDaemonContext(new FileSessionStore(directory));
   const runtime = useScriptedAgents(context);
@@ -172,7 +173,7 @@ test("cd starts a fresh session in the new directory and closes agents", async (
 
 test("cd rejects a path that is not a directory", async () => {
   const context = await createDaemonContext(
-    new FileSessionStore(await mkdtemp(join(tmpdir(), "claudin-"))),
+    new FileSessionStore(await mkdtemp(join(tmpdir(), "kraude-"))),
   );
   const before = context.cwd;
   await expect(
@@ -182,7 +183,7 @@ test("cd rejects a path that is not a directory", async () => {
 });
 
 test("session list request returns the stored sessions", async () => {
-  const store = new FileSessionStore(await mkdtemp(join(tmpdir(), "claudin-")));
+  const store = new FileSessionStore(await mkdtemp(join(tmpdir(), "kraude-")));
   const stored = await startSession(store);
   await stored.dispatch({ type: "agent.prompt.requested", agentSessionId: "a", content: "hello" });
   const context = await createDaemonContext(store);
@@ -194,8 +195,8 @@ test("session list request returns the stored sessions", async () => {
 });
 
 test("restoring a session also switches to its directory", async () => {
-  const store = new FileSessionStore(await mkdtemp(join(tmpdir(), "claudin-")));
-  const target = await realpath(await mkdtemp(join(tmpdir(), "claudin-cwd-")));
+  const store = new FileSessionStore(await mkdtemp(join(tmpdir(), "kraude-")));
+  const target = await realpath(await mkdtemp(join(tmpdir(), "kraude-cwd-")));
   const stored = await startSession(store);
   await stored.dispatch({
     type: "workspace.info.received",
@@ -213,7 +214,7 @@ test("restoring a session also switches to its directory", async () => {
 });
 
 test("restoring fails when the session directory is gone", async () => {
-  const store = new FileSessionStore(await mkdtemp(join(tmpdir(), "claudin-")));
+  const store = new FileSessionStore(await mkdtemp(join(tmpdir(), "kraude-")));
   const stored = await startSession(store);
   await stored.dispatch({
     type: "workspace.info.received",
@@ -229,7 +230,7 @@ test("restoring fails when the session directory is gone", async () => {
 
 test("agent sessions are created in the daemon working directory", async () => {
   const context = await createDaemonContext(
-    new FileSessionStore(await mkdtemp(join(tmpdir(), "claudin-"))),
+    new FileSessionStore(await mkdtemp(join(tmpdir(), "kraude-"))),
   );
   const runtime = useScriptedAgents(context);
   context.cwd = "/some/dir";
@@ -243,7 +244,7 @@ test("agent sessions are created in the daemon working directory", async () => {
 
 test("rewind requests restore files through the agent session", async () => {
   const context = await createDaemonContext(
-    new FileSessionStore(await mkdtemp(join(tmpdir(), "claudin-"))),
+    new FileSessionStore(await mkdtemp(join(tmpdir(), "kraude-"))),
   );
   const runtime = useScriptedAgents(context);
   context.agents.createSession({ sessionId: "a" });

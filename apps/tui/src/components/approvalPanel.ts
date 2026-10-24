@@ -1,4 +1,4 @@
-import type { ApprovalDecision, ToolCall } from "@claudin/events";
+import type { ApprovalDecision, ToolCall } from "@kraude-kode/events";
 import {
   BoxRenderable,
   bold,

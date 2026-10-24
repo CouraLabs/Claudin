@@ -1,4 +1,4 @@
-import type { AutocompleteKind } from "@claudin/events";
+import type { AutocompleteKind } from "@kraude-kode/events";
 import type { KeyEvent } from "@opentui/core";
 import type { AppStore } from "../store/appStore.ts";
 import { listSlashCommands } from "./slashCatalog.ts";
@@ -68,8 +68,8 @@ export function acceptAutocomplete(store: AppStore, editor: Editor): void {
 }
 
 export function routeAutocompleteKey(key: KeyEvent, store: AppStore, accept: () => void): boolean {
-  const { autocomplete, focus } = store.state.ui;
-  if (focus !== "input" || !autocomplete || autocomplete.matches.length === 0) return false;
+  const { autocomplete } = store.state.ui;
+  if (!autocomplete || autocomplete.matches.length === 0) return false;
   if (key.name === "up" || key.name === "down") {
     store.emit({ type: "ui.autocomplete.moved", delta: key.name === "up" ? -1 : 1 });
     return true;

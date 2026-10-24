@@ -1,5 +1,5 @@
 {
-  "name": "@claudin/cli",
+  "name": "@kraude-kode/cli",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -15,8 +15,9 @@
     "test": "bunx --bun vitest run --config ../../vitest.config.ts --root ."
   },
   "dependencies": {
-    "@claudin/daemon": "workspace:*",
-    "@claudin/tui": "workspace:*",
+    "@kraude-kode/daemon": "workspace:*",
+    "@kraude-kode/events": "workspace:*",
+    "@kraude-kode/tui": "workspace:*",
     "commander": "^15.0.0"
   }
 }

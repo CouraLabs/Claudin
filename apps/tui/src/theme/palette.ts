@@ -1,4 +1,4 @@
-import { type BackgroundColor, TRANSPARENT_BACKGROUND } from "@claudin/events";
+import { type BackgroundColor, TRANSPARENT_BACKGROUND } from "@kraude-kode/events";
 import { type RGBA, rgbToHex } from "@opentui/core";
 import { tint, toBackgroundHex } from "./color.ts";
 import type { ResolvedColors } from "./resolveTheme.ts";
@@ -66,7 +66,9 @@ export function buildPalette(
     },
     fg: {
       primary: hex("text"),
-      secondary: hex("secondary") ?? rgbToHex(tint(color("text"), color("textMuted"), SECONDARY_TEXT_WEIGHT)),
+      secondary:
+        hex("secondary") ??
+        rgbToHex(tint(color("text"), color("textMuted"), SECONDARY_TEXT_WEIGHT)),
       muted: hex("textMuted"),
     },
     border: { subtle: hex("borderSubtle"), focus: hex("borderActive"), separator: hex("border") },

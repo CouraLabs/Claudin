@@ -1,4 +1,3 @@
-import { appendNotice } from "./appendEntry.ts";
 import {
   BACKGROUND_CHANNELS,
   type BackgroundColor,
@@ -6,6 +5,7 @@ import {
   TRANSPARENT_BACKGROUND,
 } from "../models/backgroundColor.ts";
 import type { SessionState } from "../session/sessionState.ts";
+import { appendNotice } from "./appendEntry.ts";
 import { wrapIndex } from "./wrapIndex.ts";
 
 export const openBackgroundEditor = (state: SessionState): SessionState => ({

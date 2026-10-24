@@ -164,15 +164,9 @@ test("system init fills model and workspace info", () => {
   });
 });
 
-test("ui events cycle focus, move completions and toggle tool calls", () => {
+test("ui events move completions and toggle tool calls", () => {
   const withTool = play([prompt, assistant("m1", [toolUse("t1", "Read")])]);
   expect(listToolCalls(withTool)[0]?.expanded).toBe(false);
-
-  const cycled = reduceSessionState(withTool, { type: "ui.focus.cycled", direction: 1 });
-  expect(cycled.ui.focus).toBe("scrollback");
-  expect(reduceSessionState(cycled, { type: "ui.focus.cycled", direction: 1 }).ui.focus).toBe(
-    "input",
-  );
 
   const toggled = reduceSessionState(withTool, { type: "ui.tool.toggled", callId: "t1" });
   expect(listToolCalls(toggled)[0]?.expanded).toBe(true);

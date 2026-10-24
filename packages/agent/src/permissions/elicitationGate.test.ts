@@ -1,5 +1,5 @@
 import type { ElicitationRequest, ElicitationResult } from "@anthropic-ai/claude-agent-sdk";
-import type { ResponseEvent } from "@claudin/events";
+import type { ResponseEvent } from "@kraude-kode/events";
 import { expect, test } from "vitest";
 import { ElicitationGate } from "./elicitationGate.ts";
 

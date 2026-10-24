@@ -1,4 +1,4 @@
-import type { SessionState } from "@claudin/events";
+import type { SessionState } from "@kraude-kode/events";
 import type { AppStore } from "../store/appStore.ts";
 import { SLASH_ALIASES, SLASH_COMMANDS } from "./localCommands.ts";
 

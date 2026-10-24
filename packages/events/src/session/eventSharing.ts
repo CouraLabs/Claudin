@@ -4,6 +4,8 @@ import { responseEventSchema } from "../responses/responseEvents.ts";
 import type { AppEvent } from "./appEvent.ts";
 
 const PRIVATE_TYPES = new Set<string>([
+  "daemon.status.requested",
+  "daemon.status.received",
   "session.list.requested",
   "session.list.received",
   "session.search.requested",

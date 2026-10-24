@@ -1,5 +1,5 @@
-import { openBrowser } from "@claudin/agent";
-import type { RequestEvent } from "@claudin/events";
+import { openBrowser } from "@kraude-kode/agent";
+import type { RequestEvent } from "@kraude-kode/events";
 import { readCachedRateLimits, writeCachedRateLimits } from "../persistence/rateLimitCache.ts";
 import type { RequestHandlers } from "../server/requestHandler.ts";
 

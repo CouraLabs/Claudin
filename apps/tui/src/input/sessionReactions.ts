@@ -1,4 +1,4 @@
-import type { AppEvent } from "@claudin/events";
+import type { AppEvent } from "@kraude-kode/events";
 import type { AppStore } from "../store/appStore.ts";
 import {
   forkAgentSession,

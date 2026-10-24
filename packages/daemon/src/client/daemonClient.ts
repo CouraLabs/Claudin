@@ -3,7 +3,7 @@ import {
   type RequestEvent,
   type ResponseEvent,
   type SDKMessage,
-} from "@claudin/events";
+} from "@kraude-kode/events";
 import { appendCredentials, type ConnectionCredentials } from "../auth/connectionCredentials.ts";
 
 export type AgentResponseEvent = ResponseEvent<SDKMessage>;

@@ -1,4 +1,4 @@
-import type { GitStats } from "@claudin/events";
+import type { GitStats } from "@kraude-kode/events";
 
 export type GitInfo = { gitBranch: string; gitStats: GitStats };
 

@@ -5,7 +5,7 @@ import { expect, test } from "vitest";
 import { buildHistoryPath, readHistoryFile, writeHistoryFile } from "./historyFile.ts";
 import { HistorySaver } from "./historySaver.ts";
 
-const makePath = async () => join(await mkdtemp(join(tmpdir(), "claudin-hf-")), "history.jsonl");
+const makePath = async () => join(await mkdtemp(join(tmpdir(), "kraude-hf-")), "history.jsonl");
 
 test("the history path is derived from the working directory", () => {
   expect(buildHistoryPath("/Users/me/app", "/root")).toBe("/root/-Users-me-app/history.jsonl");

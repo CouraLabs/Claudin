@@ -7,11 +7,11 @@ import {
   StyledText,
   TextRenderable,
 } from "@opentui/core";
-import { SPINNER_FRAMES } from "../format/glyphs.ts";
+import { TASK_SPINNER_FRAMES } from "../format/glyphs.ts";
 import type { TaskRow } from "../format/taskRows.ts";
 import { Theme } from "../theme/colors.ts";
 
-const SPINNER_STEP_MS = 100;
+const TASK_SPINNER_STEP_MS = 125;
 
 export class TaskRowView {
   readonly renderable: BoxRenderable;
@@ -45,7 +45,8 @@ export class TaskRowView {
     this.renderable.visible = row !== undefined;
     if (!row) return;
     this.taskId = row.taskId;
-    const frame = SPINNER_FRAMES[Math.floor(now / SPINNER_STEP_MS) % SPINNER_FRAMES.length];
+    const frame =
+      TASK_SPINNER_FRAMES[Math.floor(now / TASK_SPINNER_STEP_MS) % TASK_SPINNER_FRAMES.length];
     this.title.content = new StyledText([
       fg(Theme.status.success)(`${frame} `),
       bold(fg(Theme.fg.primary)(row.kind)),

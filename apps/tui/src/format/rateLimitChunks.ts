@@ -1,4 +1,4 @@
-import type { RateLimits, RateWindow } from "@claudin/events";
+import type { RateLimits, RateWindow } from "@kraude-kode/events";
 import { fg, type TextChunk } from "@opentui/core";
 import { Theme } from "../theme/colors.ts";
 import { buildGauge, formatTimeUntil } from "./formatMetrics.ts";

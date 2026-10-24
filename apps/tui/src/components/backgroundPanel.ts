@@ -1,4 +1,4 @@
-import type { SessionState } from "@claudin/events";
+import type { SessionState } from "@kraude-kode/events";
 import { BoxRenderable, type CliRenderer, StyledText, TextRenderable } from "@opentui/core";
 import { buildBackgroundChunks } from "../format/backgroundChunks.ts";
 

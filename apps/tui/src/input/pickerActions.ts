@@ -4,7 +4,7 @@ import {
   type Picker,
   type SessionState,
   THEME_NAMES,
-} from "@claudin/events";
+} from "@kraude-kode/events";
 import type { AppStore } from "../store/appStore.ts";
 import { guardIdle } from "./agentBusy.ts";
 import { requestAgent } from "./agentRequest.ts";

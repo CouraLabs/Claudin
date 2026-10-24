@@ -1,4 +1,4 @@
-import type { SessionState } from "@claudin/events";
+import type { SessionState } from "@kraude-kode/events";
 import {
   BoxRenderable,
   bold,
@@ -44,7 +44,7 @@ export class TaskPanel {
     this.renderable.visible = tasks.length > 0;
     if (tasks.length === 0) return;
     const rows = buildTaskRows(tasks, now);
-    this.header.content = new StyledText([bold(fg(Theme.fg.primary)(buildTaskHeader(tasks)))]);
+    this.header.content = new StyledText([bold(fg(Theme.accent.brand)(buildTaskHeader(tasks)))]);
     this.rows.forEach((view, index) => view.update(rows[index], now));
     const hidden = countHiddenTasks(tasks);
     this.overflow.content = hidden

@@ -1,4 +1,4 @@
-import type { SessionState } from "@claudin/events";
+import type { SessionState } from "@kraude-kode/events";
 import { BoxRenderable, type CliRenderer, fg, StyledText, TextRenderable } from "@opentui/core";
 import { Theme } from "../theme/colors.ts";
 

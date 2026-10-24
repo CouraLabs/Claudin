@@ -1,4 +1,4 @@
-import { BATCH_EDIT_TOOL_NAME, listBatchEditPaths, type ToolCall } from "@claudin/events";
+import { BATCH_EDIT_TOOL_NAME, listBatchEditPaths, type ToolCall } from "@kraude-kode/events";
 import { truncateText } from "./truncateText.ts";
 
 const VALUE_LENGTH = 200;

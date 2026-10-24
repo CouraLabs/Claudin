@@ -3,7 +3,7 @@ import {
   readModelLabel,
   readPermissionLabel,
   type SessionState,
-} from "@claudin/events";
+} from "@kraude-kode/events";
 import { dim, fg, type TextChunk } from "@opentui/core";
 import { Theme } from "../theme/colors.ts";
 import { formatCost, formatTokenCount } from "./formatMetrics.ts";
@@ -14,13 +14,19 @@ type Setting = { text: string; color: string; hint?: string };
 
 const MODEL_HINT = " (shift+tab)";
 
+const EFFORT_HINT = " (tab)";
+
 const buildEffortText = (effort: string): string =>
   [EFFORT_GLYPHS[effort], effort].filter(Boolean).join(" ");
 
 const buildSettings = (state: SessionState): Setting[] =>
   [
     { text: readModelLabel(state), color: Theme.fg.primary, hint: MODEL_HINT },
-    { text: buildEffortText(state.effort), color: readEffortColor(state.effort) },
+    {
+      text: buildEffortText(state.effort),
+      color: readEffortColor(state.effort),
+      hint: EFFORT_HINT,
+    },
     { text: formatCost(state.costUsd), color: Theme.status.warning },
     {
       text: `${PERMISSION_GLYPH} ${readPermissionLabel(state.permissionMode).replace(/\s*Permissions?$/, "")}`,

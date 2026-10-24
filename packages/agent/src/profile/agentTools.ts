@@ -7,19 +7,10 @@ export const AGENT_TOOLS = [
   "WebFetch",
   "TaskStop",
   "Agent",
-  "TaskCreate",
-  "TaskGet",
-  "TaskList",
-  "TaskOutput",
-  "TaskUpdate",
-  "TodoWrite",
   "AskUserQuestion",
   "Write",
-  "Edit"
+  "Edit",
+  "Skill"
 ];
 
-export const AGENT_DISALLOWED_TOOLS = [
-  "Agent(Explore)",
-  "Agent(Plan)",
-  "Agent(statusline-setup)",
-]
+export const AGENT_DISALLOWED_TOOLS = ["Agent(Explore)", "Agent(Plan)", "Agent(statusline-setup)"];

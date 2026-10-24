@@ -1,5 +1,5 @@
 import { relative, resolve } from "node:path";
-import { countPatchLines, type FileDiff } from "@claudin/events";
+import { countPatchLines, type FileDiff } from "@kraude-kode/events";
 
 const isTracked = async (cwd: string, path: string): Promise<boolean> =>
   (await Bun.$`git ls-files --error-unmatch -- ${path}`.cwd(cwd).quiet().nothrow()).exitCode === 0;

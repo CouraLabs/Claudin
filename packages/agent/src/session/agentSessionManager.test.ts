@@ -1,5 +1,5 @@
 import type { ModelInfo, SDKMessage, SDKUserMessage } from "@anthropic-ai/claude-agent-sdk";
-import type { ResponseEvent } from "@claudin/events";
+import type { ResponseEvent } from "@kraude-kode/events";
 import { expect, test } from "vitest";
 import { AGENT_PROFILE_OPTIONS } from "../profile/agentProfile.ts";
 import { RESULT_MESSAGE, ScriptedRuntime, type ScriptedTurn } from "../runtime/scriptedRuntime.ts";

@@ -15,7 +15,7 @@ export const isToolsEntry = (entry: TranscriptEntry): entry is ToolsEntry => ent
 export const listToolCalls = (state: SessionState): ToolCall[] =>
   state.transcript.filter(isToolsEntry).flatMap((entry) => entry.calls);
 
-const EDIT_TOOLS = new Set(["Write", "Edit", "MultiEdit", "mcp__claudin__BatchEdit"]);
+const EDIT_TOOLS = new Set(["Write", "Edit", "MultiEdit", "mcp__kraude__BatchEdit"]);
 
 export const listBatchEditPaths = (input: ToolCall["input"]): unknown[] =>
   Array.isArray(input.edits) ? input.edits.map((edit) => edit?.file_path) : [];

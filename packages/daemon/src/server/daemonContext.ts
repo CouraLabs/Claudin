@@ -1,6 +1,6 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { AgentSessionManager } from "@claudin/agent";
+import { AgentSessionManager } from "@kraude-kode/agent";
 import {
   FileSessionStore,
   type ResponseEvent,
@@ -8,11 +8,11 @@ import {
   Session,
   type SessionStore,
   startSession,
-} from "@claudin/events";
+} from "@kraude-kode/events";
 import { OPTIONS_PATH } from "../persistence/optionsFile.ts";
 import { isDirectory, resolveUserPath } from "../workspace/resolvePath.ts";
 
-export const SESSIONS_DIRECTORY = join(homedir(), ".claudin", "sessions");
+export const SESSIONS_DIRECTORY = join(homedir(), ".kraude", "sessions");
 
 type CreatedEvent = Extract<ResponseEvent, { type: "session.created" }>;
 type RestoredEvent = Extract<ResponseEvent, { type: "session.restored" }>;
@@ -61,6 +61,11 @@ export class DaemonContext {
     const cwd = resolveUserPath(this.cwd, path);
     if (!(await isDirectory(cwd))) throw new Error(`Not a directory: ${cwd}`);
     return { cwd, created: this.startFreshSession(cwd) };
+  }
+
+  async adoptDirectory(path: string): Promise<void> {
+    const cwd = resolveUserPath(this.cwd, path);
+    if (await isDirectory(cwd)) this.cwd = cwd;
   }
 }
 

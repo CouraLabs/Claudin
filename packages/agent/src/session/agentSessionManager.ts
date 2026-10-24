@@ -4,13 +4,17 @@ import type {
   GetSessionMessagesOptions,
   Options,
 } from "@anthropic-ai/claude-agent-sdk";
+import { type Sleep, waitOutSleep } from "../ratelimit/rateLimitResume.ts";
 import { type AgentRuntime, sdkRuntime } from "../runtime/agentRuntime.ts";
 import { AgentSession } from "./agentSession.ts";
 
 export class AgentSessionManager {
   readonly sessions = new Map<string, AgentSession>();
 
-  constructor(private runtime: AgentRuntime = sdkRuntime) {}
+  constructor(
+    private runtime: AgentRuntime = sdkRuntime,
+    private sleep: Sleep = waitOutSleep,
+  ) {}
 
   getAgentSessionInfo(sessionId: string, options?: GetSessionInfoOptions) {
     return this.runtime.getInfo(sessionId, options);
@@ -57,7 +61,7 @@ export class AgentSessionManager {
 
   private replaceSession(sessionId: string, options: Options): void {
     this.closeSession(sessionId);
-    this.sessions.set(sessionId, new AgentSession(sessionId, options, this.runtime));
+    this.sessions.set(sessionId, new AgentSession(sessionId, options, this.runtime, this.sleep));
   }
 
   requireSession(sessionId: string): AgentSession {

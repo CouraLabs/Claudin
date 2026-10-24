@@ -1,9 +1,9 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
-import type { RawRateLimits } from "@claudin/events";
+import type { RawRateLimits } from "@kraude-kode/events";
 
-export const RATE_LIMIT_CACHE_PATH = join(homedir(), ".claudin", "rate-limits.json");
+export const RATE_LIMIT_CACHE_PATH = join(homedir(), ".kraude", "rate-limits.json");
 
 const dropExpiredWindows = (limits: RawRateLimits, now: number): RawRateLimits => {
   const live = Object.entries(limits ?? {}).filter(([, window]) => {

@@ -1,4 +1,4 @@
-import { listEditedFiles } from "@claudin/events";
+import { listEditedFiles } from "@kraude-kode/events";
 import type { AppStore } from "../store/appStore.ts";
 import { guardIdle } from "./agentBusy.ts";
 

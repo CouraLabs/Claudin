@@ -23,7 +23,7 @@ const renderEntry = (entry: TranscriptEntry): string | undefined => {
 
 export function renderTranscriptMarkdown(state: SessionState): string {
   const header = [
-    "# Claudin session",
+    "# KraudeKode session",
     "",
     `- Session: ${state.sessionId}`,
     `- Directory: ${state.cwd}`,

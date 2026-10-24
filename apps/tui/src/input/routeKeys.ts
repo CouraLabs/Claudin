@@ -1,4 +1,4 @@
-import { isCustomRow } from "@claudin/events";
+import { isCustomRow } from "@kraude-kode/events";
 import type { KeyEvent } from "@opentui/core";
 import type { DiffViewerPanel } from "../components/diffViewerPanel.ts";
 import type { ScrollbackView } from "../components/scrollbackView.ts";
@@ -7,7 +7,7 @@ import { isAgentBusy } from "./agentBusy.ts";
 import { routeAutocompleteKey } from "./autocomplete.ts";
 import { adjustBackground, closeBackgroundEditor, saveBackground } from "./backgroundActions.ts";
 import { type InputEditor, routeHistoryKey, routeHistorySearchKey } from "./historyActions.ts";
-import { openModelPicker } from "./localCommands.ts";
+import { cycleEffort, openModelPicker } from "./localCommands.ts";
 import { confirmPicker } from "./pickerActions.ts";
 import { answerApproval, cancelTurn, type PromptDelivery } from "./promptActions.ts";
 import { confirmQuestion, dismissQuestion } from "./questionActions.ts";
@@ -105,9 +105,9 @@ const routeQuestion: KeyRoute = (key, { store }) => {
 const routeCompletion: KeyRoute = (key, { store, acceptCompletion }) =>
   routeAutocompleteKey(key, store, acceptCompletion);
 
-const routeFocusCycle: KeyRoute = (key, { store }) => {
-  if (key.name !== "tab") return false;
-  store.emit({ type: "ui.focus.cycled", direction: 1 });
+const routeEffortCycle: KeyRoute = (key, { store }) => {
+  if (key.name !== "tab" || key.shift) return false;
+  cycleEffort(store);
   return true;
 };
 
@@ -117,8 +117,8 @@ const routePageScroll: KeyRoute = (key, { scrollback }) => {
   return true;
 };
 
-const routeScrollback: KeyRoute = (key, { store, scrollback, editor }) => {
-  if (store.state.ui.focus !== "scrollback" && editor.read() !== "") return false;
+const routeScrollback: KeyRoute = (key, { scrollback, editor }) => {
+  if (editor.read() !== "") return false;
   if (key.name !== "up" && key.name !== "down") return false;
   scrollback.scrollByLines(key.name === "up" ? -1 : 1);
   return true;
@@ -179,16 +179,15 @@ const routeModelPicker: KeyRoute = (key, { store }) => {
   return true;
 };
 
-const routeDelivery: KeyRoute = (key, { store, submitInput }) => {
+const routeDelivery: KeyRoute = (key, { submitInput }) => {
   const delivery = key.ctrl ? DELIVERY_KEYS[key.name] : undefined;
-  if (!delivery || store.state.ui.focus !== "input") return false;
+  if (!delivery) return false;
   submitInput(delivery);
   return true;
 };
 
-const routePaste: KeyRoute = (key, { store, pasteClipboard }) => {
+const routePaste: KeyRoute = (key, { pasteClipboard }) => {
   if (key.name !== "v" || !(key.ctrl || key.super)) return false;
-  if (store.state.ui.focus !== "input") return false;
   pasteClipboard();
   return true;
 };
@@ -206,7 +205,7 @@ const ROUTES: KeyRoute[] = [
   routeHistorySearch,
   routeCompletion,
   routeDoubleEscape,
-  routeFocusCycle,
+  routeEffortCycle,
   routePageScroll,
   routeHistory,
   routeScrollback,

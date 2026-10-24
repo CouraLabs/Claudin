@@ -1,4 +1,4 @@
-import { FileSessionStore, type RequestEvent, type StoredEvent } from "@claudin/events";
+import { FileSessionStore, type RequestEvent, type StoredEvent } from "@kraude-kode/events";
 import { SESSIONS_DIRECTORY } from "../server/daemonContext.ts";
 import type { DaemonEvent, DaemonEventListener, EventClient } from "./daemonClient.ts";
 

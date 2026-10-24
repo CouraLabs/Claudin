@@ -4,7 +4,7 @@ import {
   listCheckpoints,
   type SessionState,
   THEME_NAMES,
-} from "@claudin/events";
+} from "@kraude-kode/events";
 import { buildSlashCatalog } from "../input/slashCatalog.ts";
 import { formatTimeAgo } from "./formatMetrics.ts";
 import { SEPARATOR } from "./glyphs.ts";

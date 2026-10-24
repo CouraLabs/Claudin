@@ -1,10 +1,12 @@
 import { z } from "zod";
+import { daemonResponseSchemas } from "../requests/daemonEvents.ts";
 import { optionsResponseSchemas } from "../requests/optionsEvents.ts";
 import { workspaceResponseSchemas } from "../requests/workspaceEvents.ts";
 import type { SessionSummary, StoredEvent } from "../session/sessionSummary.ts";
 import { agentResponseSchemas } from "./agentResponseEvents.ts";
 
 export const responseEventSchema = z.discriminatedUnion("type", [
+  ...daemonResponseSchemas,
   z.object({ type: z.literal("session.created"), sessionId: z.string() }),
   z.object({
     type: z.literal("session.restored"),

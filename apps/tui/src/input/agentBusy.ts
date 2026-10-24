@@ -1,4 +1,4 @@
-import type { AgentStatus } from "@claudin/events";
+import type { AgentStatus } from "@kraude-kode/events";
 import type { AppStore } from "../store/appStore.ts";
 
 export const isStatusBusy = (status: AgentStatus): boolean =>

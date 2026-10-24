@@ -1,6 +1,6 @@
-import { appendEntry } from "./appendEntry.ts";
 import { readTokens, type UsageFields } from "../models/readTokens.ts";
 import type { SessionState } from "../session/sessionState.ts";
+import { appendEntry } from "./appendEntry.ts";
 
 type StreamEvent = {
   type: string;

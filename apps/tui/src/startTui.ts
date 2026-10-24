@@ -1,4 +1,4 @@
-import type { EventClient } from "@claudin/daemon/client";
+import type { EventClient } from "@kraude-kode/daemon/client";
 import {
   type BackgroundColor,
   findAwaitingCalls,
@@ -8,7 +8,7 @@ import {
   type SessionState,
   THEME_NAMES,
   type ThemeName,
-} from "@claudin/events";
+} from "@kraude-kode/events";
 import {
   BoxRenderable,
   type CliRenderer,
@@ -21,10 +21,10 @@ import { DiffViewerPanel } from "./components/diffViewerPanel.ts";
 import { HeaderBar } from "./components/headerBar.ts";
 import { ListPopover } from "./components/listPopover.ts";
 import { PromptInput } from "./components/promptInput.ts";
+import { PromptQueueView } from "./components/promptQueueView.ts";
 import { ScrollbackView } from "./components/scrollbackView.ts";
 import { SessionInfoBar } from "./components/sessionInfoBar.ts";
 import { StatusLine } from "./components/statusLine.ts";
-import { PromptQueueView } from "./components/promptQueueView.ts";
 import { TaskPanel } from "./components/taskPanel.ts";
 import { ToastView } from "./components/toastView.ts";
 import { buildListView } from "./format/listViews.ts";
@@ -190,11 +190,7 @@ export async function startTui(
     diffViewer.update(state);
     popover.update(buildListView(state));
     backgroundPanel.update(state);
-    const inputFocused = state.ui.focus === "input";
-    input.setFocused(inputFocused);
-    scrollback.setFocused(!inputFocused);
     input.setBusy(isStatusBusy(state.status));
-    input.setBorderColor(inputFocused ? Theme.fg.muted : Theme.border.separator);
     const awaitingId = (findAwaitingCalls(state)[0] ?? findQuestionCalls(state)[0])?.id;
     if (awaitingId && awaitingId !== revealedCallId) {
       scrollback.revealEntry(findGroupId(state, awaitingId) ?? "");
@@ -211,7 +207,7 @@ export async function startTui(
     if (event.type === "ui.exit.requested") activeRenderer.destroy();
     if (event.type === "ui.title.set") activeRenderer.setTerminalTitle(event.title);
   });
-  store.emit({ type: "ui.title.set", title: "Claudin" });
+  store.emit({ type: "ui.title.set", title: "KraudeKode" });
   const editor = {
     read: () => input.text,
     replace: (text: string) => input.replaceText(text, text.length),
@@ -234,7 +230,8 @@ export async function startTui(
 
   const clock = setInterval(() => {
     const { status, tasks } = store.state;
-    if (status !== "idle" || tasks.length > 0) store.emit({ type: "ui.clock.ticked", now: Date.now() });
+    if (status !== "idle" || tasks.length > 0)
+      store.emit({ type: "ui.clock.ticked", now: Date.now() });
   }, CLOCK_INTERVAL_MS);
   let lastRateLimitAt = Date.now();
   const rateLimitPoll = setInterval(() => {

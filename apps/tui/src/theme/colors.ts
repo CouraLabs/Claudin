@@ -3,7 +3,7 @@ import {
   DEFAULT_THEME_NAME,
   type ThemeName,
   TRANSPARENT_BACKGROUND,
-} from "@claudin/events";
+} from "@kraude-kode/events";
 import { buildPalette, type Palette } from "./palette.ts";
 import { resolveNamedTheme } from "./themeCatalog.ts";
 

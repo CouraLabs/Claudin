@@ -1,4 +1,4 @@
-import type { SessionState, ToolsEntry } from "@claudin/events";
+import type { SessionState, ToolsEntry } from "@kraude-kode/events";
 import { BoxRenderable, type CliRenderer } from "@opentui/core";
 import { type ToolCallHooks, ToolCallView } from "./toolCallView.ts";
 import type { EntryView } from "./viewTypes.ts";

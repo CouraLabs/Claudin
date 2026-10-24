@@ -1,4 +1,4 @@
-import type { BackgroundColor } from "@claudin/events";
+import type { BackgroundColor } from "@kraude-kode/events";
 import { RGBA, rgbToHex } from "@opentui/core";
 
 export function tint(base: RGBA, overlay: RGBA, alpha: number): RGBA {

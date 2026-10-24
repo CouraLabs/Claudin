@@ -19,7 +19,11 @@ import {
 } from "./reduceNotices.ts";
 import { reducePrompt } from "./reducePrompt.ts";
 import { reduceQuestionRequired, reduceQuestionResolved } from "./reduceQuestion.ts";
-import { reduceRateLimit } from "./reduceRateLimit.ts";
+import {
+  reduceRateLimit,
+  reduceWaitEnd,
+  reduceWaitStart,
+} from "./reduceRateLimit.ts";
 import { stopStreaming } from "./reduceResult.ts";
 import { applyLoadedTheme, applySavedTheme } from "./reduceTheme.ts";
 import { reduceUi } from "./reduceUi.ts";
@@ -128,7 +132,7 @@ export function reduceSessionState(state: SessionState, event: AppEvent): Sessio
         ...appendNotice(settleOpenCalls(state, "Cancelled"), "Turn cancelled"),
         status: "idle",
         turnStartedAt: undefined,
-        ui: { ...state.ui, focus: "input", question: null },
+        ui: { ...state.ui, question: null },
       };
     case "agent.tool.approval.required":
       return reduceApprovalRequired(state, event);
@@ -166,6 +170,10 @@ export function reduceSessionState(state: SessionState, event: AppEvent): Sessio
       return { ...state, slashCommands: event.commands };
     case "agent.rate_limit.received":
       return reduceRateLimit(state, event.rateLimit);
+    case "agent.rate_limit.wait.started":
+      return reduceWaitStart(state, event.resetsAt);
+    case "agent.rate_limit.wait.ended":
+      return reduceWaitEnd(state, event.resumed);
     case "agent.permission_mode.changed":
       return reduceModeChanged(state, event.mode);
     case "agent.mcp.status.received":

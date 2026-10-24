@@ -8,9 +8,9 @@ import { reduceRateLimitEvent } from "./reduceRateLimit.ts";
 import { reduceResult } from "./reduceResult.ts";
 import { reduceStreamEvent } from "./reduceStreamEvent.ts";
 import { reduceTaskModel } from "./reduceTaskModel.ts";
-import { reduceTaskToolUse } from "./reduceTaskToolUse.ts";
 import { reduceTaskProgress } from "./reduceTaskProgress.ts";
 import { isTaskMessage, reduceTasks } from "./reduceTasks.ts";
+import { reduceTaskToolUse } from "./reduceTaskToolUse.ts";
 import { reduceToolResults } from "./reduceToolResults.ts";
 
 export function reduceAgentMessage(state: SessionState, message: SDKMessage): SessionState {

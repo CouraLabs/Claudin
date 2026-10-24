@@ -1,4 +1,4 @@
-import type { AskedQuestion } from "@claudin/events";
+import type { AskedQuestion } from "@kraude-kode/events";
 import { sanitizeText } from "./sanitizeText.ts";
 
 type Choice = { value: string; label: string };

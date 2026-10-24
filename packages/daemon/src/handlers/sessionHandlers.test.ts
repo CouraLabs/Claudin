@@ -1,22 +1,23 @@
 import { mkdtemp, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { AgentSessionManager, ScriptedRuntime } from "@claudin/agent";
-import { FileSessionStore, type RequestEvent, startSession } from "@claudin/events";
+import { AgentSessionManager, ScriptedRuntime } from "@kraude-kode/agent";
+import { FileSessionStore, startSession } from "@kraude-kode/events";
 import { expect, test } from "vitest";
 import { createDaemonContext, type DaemonContext } from "../server/daemonContext.ts";
 import { handleRequest } from "../server/handleRequest.ts";
+import type { HandledRequest } from "../server/requestHandler.ts";
 
-async function collect(context: DaemonContext, request: RequestEvent) {
+async function collect(context: DaemonContext, request: HandledRequest) {
   const responses = [];
   for await (const response of handleRequest(context, request)) responses.push(response);
   return responses;
 }
 
 async function createContext() {
-  const store = new FileSessionStore(await mkdtemp(join(tmpdir(), "claudin-")));
+  const store = new FileSessionStore(await mkdtemp(join(tmpdir(), "kraude-")));
   const context = await createDaemonContext(store);
-  context.cwd = await mkdtemp(join(tmpdir(), "claudin-ws-"));
+  context.cwd = await mkdtemp(join(tmpdir(), "kraude-ws-"));
   return { store, context };
 }
 

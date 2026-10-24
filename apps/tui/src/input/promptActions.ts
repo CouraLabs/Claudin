@@ -1,4 +1,4 @@
-import { type ApprovalDecision, findAwaitingCalls } from "@claudin/events";
+import { type ApprovalDecision, findAwaitingCalls } from "@kraude-kode/events";
 import type { ImageBlock } from "../prompt/imageBlock.ts";
 import type { AppStore } from "../store/appStore.ts";
 import { isAgentBusy } from "./agentBusy.ts";

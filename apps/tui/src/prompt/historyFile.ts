@@ -1,8 +1,8 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { MAX_PROMPT_HISTORY } from "@claudin/events";
+import { MAX_PROMPT_HISTORY } from "@kraude-kode/events";
 
-const HISTORY_ROOT = join(homedir(), ".claudin", "prompts");
+const HISTORY_ROOT = join(homedir(), ".kraude", "prompts");
 
 export const buildHistoryPath = (cwd: string, root = HISTORY_ROOT): string =>
   join(root, cwd.replace(/[^a-zA-Z0-9]/g, "-"), "history.jsonl");

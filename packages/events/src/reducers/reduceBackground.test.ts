@@ -1,8 +1,8 @@
 import { expect, test } from "vitest";
-import type { AppEvent } from "../session/appEvent.ts";
 import { TRANSPARENT_BACKGROUND } from "../models/backgroundColor.ts";
-import { reduceSessionState } from "./reduceSessionState.ts";
+import type { AppEvent } from "../session/appEvent.ts";
 import { createSessionState } from "../session/sessionState.ts";
+import { reduceSessionState } from "./reduceSessionState.ts";
 
 const play = (events: AppEvent[]) => events.reduce(reduceSessionState, createSessionState("s"));
 

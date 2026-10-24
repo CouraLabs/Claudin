@@ -5,9 +5,9 @@ import {
   type OptionsFile,
   optionsFileSchema,
   type ThemeName,
-} from "@claudin/events";
+} from "@kraude-kode/events";
 
-export const OPTIONS_PATH = join(homedir(), ".claudin", "options.json");
+export const OPTIONS_PATH = join(homedir(), ".kraude", "options.json");
 
 export async function readOptions(path: string): Promise<OptionsFile> {
   const stored = await Bun.file(path)

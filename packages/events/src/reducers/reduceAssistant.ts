@@ -1,7 +1,7 @@
 import type { SDKMessage } from "@anthropic-ai/claude-agent-sdk";
-import { appendEntry } from "./appendEntry.ts";
 import { readTokens, type UsageFields } from "../models/readTokens.ts";
 import type { SessionState } from "../session/sessionState.ts";
+import { appendEntry } from "./appendEntry.ts";
 import { pickToolStatus, upsertToolCall } from "./toolGroups.ts";
 
 type AssistantMessage = Extract<SDKMessage, { type: "assistant" }>;

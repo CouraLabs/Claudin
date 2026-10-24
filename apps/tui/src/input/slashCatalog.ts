@@ -1,4 +1,4 @@
-import type { SlashCommand as SdkCommand } from "@claudin/events";
+import type { SlashCommand as SdkCommand } from "@kraude-kode/events";
 import { SLASH_COMMANDS } from "./localCommands.ts";
 
 export type SlashEntry = { name: string; description: string };

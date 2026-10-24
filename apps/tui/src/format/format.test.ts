@@ -1,6 +1,7 @@
-import { BATCH_EDIT_TOOL_NAME, stripCustomPrefix, type ToolCall } from "@claudin/events";
+import { BATCH_EDIT_TOOL_NAME, stripCustomPrefix, type ToolCall } from "@kraude-kode/events";
 import { expect, test } from "vitest";
 import { buildGauge, formatDuration, formatTimeUntil, formatTokenCount } from "./formatMetrics.ts";
+import { fileName } from "./shortenPath.ts";
 import { buildToolDiff } from "./toolDiff.ts";
 import { describeApproval, summarizeToolCall } from "./toolSummary.ts";
 import { clipLines, truncateText } from "./truncateText.ts";
@@ -36,8 +37,16 @@ test("builds a ten cell gauge where each cell is 10% and a half cell is 5%", () 
   expect(buildGauge(3)).toBe("█████");
 });
 
+test("reads the file name from full, relative and trailing-slash paths", () => {
+  expect(fileName("/work/app/src/auth.ts")).toBe("auth.ts");
+  expect(fileName("src/auth.ts")).toBe("auth.ts");
+  expect(fileName("auth.ts")).toBe("auth.ts");
+  expect(fileName("src/dir/")).toBe("dir");
+  expect(fileName("/")).toBe("/");
+});
+
 test("summarizes tool calls and approval prompts", () => {
-  expect(summarizeToolCall(call("Read", { file_path: "src/a.ts" }))).toBe("src/a.ts");
+  expect(summarizeToolCall(call("Read", { file_path: "src/a.ts" }))).toBe("a.ts");
   expect(summarizeToolCall(call("Bash", { command: "npm test", description: "x" }))).toBe(
     "npm test",
   );
@@ -45,6 +54,12 @@ test("summarizes tool calls and approval prompts", () => {
   expect(describeApproval(call("Bash", { command: "npm test" }))).toBe("Run command `npm test`?");
   expect(describeApproval(call("Edit", { file_path: "a.ts" }))).toBe("Modify `a.ts` with Edit?");
   expect(describeApproval(call("WebFetch", {}))).toBe("Allow `WebFetch`?");
+  expect(
+    summarizeToolCall(call("Write", { file_path: "/work/app/src/server.ts", description: "x" })),
+  ).toBe("server.ts");
+  expect(describeApproval(call("Edit", { file_path: "/work/app/src/auth.ts" }))).toBe(
+    "Modify `auth.ts` with Edit?",
+  );
 });
 
 test("builds diffs for edit and write tools only", () => {

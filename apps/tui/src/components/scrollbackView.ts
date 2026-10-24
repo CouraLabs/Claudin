@@ -1,4 +1,4 @@
-import type { SessionState, TranscriptEntry } from "@claudin/events";
+import type { SessionState, TranscriptEntry, UserEntry } from "@kraude-kode/events";
 import {
   type CliRenderer,
   type Renderable,
@@ -9,6 +9,7 @@ import { Theme } from "../theme/colors.ts";
 import { AssistantMessageView } from "./assistantMessageView.ts";
 import { MarkdownNoticeView } from "./markdownNoticeView.ts";
 import { NoticeView } from "./noticeView.ts";
+import { PinnedPromptView } from "./pinnedPromptView.ts";
 import { ThoughtView } from "./thoughtView.ts";
 import type { ToolCallHooks } from "./toolCallView.ts";
 import { ToolGroupView } from "./toolGroupView.ts";
@@ -26,6 +27,7 @@ type ScrollbackOptions = {
 export class ScrollbackView {
   readonly renderable: ScrollBoxRenderable;
   readonly views = new Map<string, AnyEntryView>();
+  readonly pinnedPrompt: PinnedPromptView;
 
   constructor(
     private renderer: CliRenderer,
@@ -39,11 +41,21 @@ export class ScrollbackView {
       border: ["left"],
       borderStyle: "heavy",
     });
-    this.setFocused(false);
+    this.pinnedPrompt = new PinnedPromptView(renderer);
+    this.renderable.viewport.add(this.pinnedPrompt.renderable);
+    this.renderable.renderBefore = () => this.syncPinnedPrompt();
+    this.renderable.borderColor = Theme.bg.default;
   }
 
-  setFocused(focused: boolean): void {
-    this.renderable.borderColor = focused ? Theme.accent.brand : Theme.bg.default;
+  syncPinnedPrompt(): void {
+    const { viewport } = this.renderable;
+    let pinned: UserEntry | undefined;
+    for (const view of this.views.values()) {
+      if (!(view instanceof UserMessageView)) continue;
+      if (view.renderable.y >= viewport.y) break;
+      pinned = view.entry;
+    }
+    this.pinnedPrompt.show(pinned, viewport.width);
   }
 
   update(state: SessionState): void {

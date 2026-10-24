@@ -1,4 +1,4 @@
-import { BACKGROUND_CHANNELS, type BackgroundEditor, CHANNEL_MAX } from "@claudin/events";
+import { BACKGROUND_CHANNELS, type BackgroundEditor, CHANNEL_MAX } from "@kraude-kode/events";
 import { bold, dim, fg, type TextChunk } from "@opentui/core";
 import { toBackgroundHex } from "../theme/color.ts";
 import { Theme } from "../theme/colors.ts";

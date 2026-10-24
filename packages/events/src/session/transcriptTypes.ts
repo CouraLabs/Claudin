@@ -4,6 +4,7 @@ export type AgentStatus =
   | "executing"
   | "approval_required"
   | "answer_required"
+  | "rate_limited"
   | "error";
 
 export type ToolStatus =
@@ -55,5 +56,7 @@ export type TokenUsage = {
 export type RateWindow = { utilization: number; resetsAt: number };
 
 export type RateLimits = { fiveHour?: RateWindow; sevenDay?: RateWindow };
+
+export type RateLimitWait = { resetsAt: number };
 
 export type LastRun = { durationMs: number; toolCount: number };

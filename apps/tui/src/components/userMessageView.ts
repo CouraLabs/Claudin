@@ -1,4 +1,4 @@
-import type { TranscriptEntry } from "@claudin/events";
+import type { TranscriptEntry } from "@kraude-kode/events";
 import {
   BoxRenderable,
   bold,

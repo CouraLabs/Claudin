@@ -8,12 +8,21 @@ import type {
   SDKUserMessage,
   SlashCommand,
 } from "@anthropic-ai/claude-agent-sdk";
-import type { ApprovalDecision, PromptContent, ResponseEvent } from "@claudin/events";
+import type { ApprovalDecision, PromptContent, ResponseEvent } from "@kraude-kode/events";
 import { type Pushable, pushable } from "it-pushable";
 import { type WaitForLoginOptions, waitForMcpLogin } from "../mcp/waitForMcpLogin.ts";
 import { ElicitationGate } from "../permissions/elicitationGate.ts";
 import { PermissionGate } from "../permissions/permissionGate.ts";
 import { AGENT_PROFILE_OPTIONS } from "../profile/agentProfile.ts";
+import {
+  MAX_RATE_LIMIT_RESUMES,
+  RATE_LIMIT_RESUME_BUFFER_MS,
+  type RejectedRateLimit,
+  rateLimitWaitMs,
+  readRejectedRateLimit,
+  type Sleep,
+  waitOutSleep,
+} from "../ratelimit/rateLimitResume.ts";
 import type { AgentQuery, AgentRuntime } from "../runtime/agentRuntime.ts";
 import { buildUserMessage } from "../runtime/buildUserMessage.ts";
 import { readLiveTaskIds } from "./readLiveTaskIds.ts";
@@ -33,11 +42,16 @@ export class AgentSession {
   pendingTurns = 0;
   liveTaskIds: ReadonlySet<string> = new Set();
   pumping = false;
+  rateLimitRejection?: RejectedRateLimit;
+  resumeBudget = MAX_RATE_LIMIT_RESUMES;
+  private sentMessages: SDKUserMessage[] = [];
+  private waitAbort?: AbortController;
 
   constructor(
-    agentSessionId: string,
+    readonly agentSessionId: string,
     private baseOptions: Options,
     runtime: AgentRuntime,
+    private sleep: Sleep = waitOutSleep,
   ) {
     this.gate = new PermissionGate(agentSessionId);
     this.elicitations = new ElicitationGate(agentSessionId);
@@ -58,8 +72,11 @@ export class AgentSession {
   }
 
   send(content: PromptContent): void {
+    this.resumeBudget = MAX_RATE_LIMIT_RESUMES;
     this.pendingTurns += 1;
-    this.input.push(buildUserMessage(content));
+    const message = buildUserMessage(content);
+    this.sentMessages.push(message);
+    if (!this.waitAbort) this.input.push(message);
   }
 
   async *streamTurn(): AsyncGenerator<TurnEvent> {
@@ -84,6 +101,8 @@ export class AgentSession {
   }
 
   async cancel(): Promise<void> {
+    this.waitAbort?.abort();
+    this.rateLimitRejection = undefined;
     this.rejectAllPrompts();
     await this.query.interrupt();
   }
@@ -153,6 +172,8 @@ export class AgentSession {
   }
 
   close(): void {
+    this.waitAbort?.abort();
+    this.rateLimitRejection = undefined;
     this.rejectAllPrompts();
     this.input.end();
     this.query.close();
@@ -172,19 +193,69 @@ export class AgentSession {
     try {
       while (true) {
         const { done, value } = await this.query.next();
-        if (done) break;
+        if (done) {
+          const rejection = this.rateLimitRejection;
+          this.rateLimitRejection = undefined;
+          if (rejection || this.sentMessages.length > 0) {
+            sink.push({
+              type: "request.failed",
+              reason: "Agent stream ended while prompts were still pending; resend to continue.",
+            });
+          }
+          break;
+        }
+        if (value.type === "rate_limit_event") {
+          const rejection = readRejectedRateLimit(value);
+          if (rejection) this.rateLimitRejection = rejection;
+        }
         sink.push({ type: "agent.message.received", message: value });
         this.liveTaskIds = readLiveTaskIds(value, this.liveTaskIds);
         if (value.type !== "result") continue;
+        const rejection = this.rateLimitRejection;
+        this.rateLimitRejection = undefined;
+        if (rejection && value.is_error && (await this.resumeAfterLimit(sink, rejection))) continue;
         this.pendingTurns = Math.max(this.pendingTurns - 1, 0);
+        this.sentMessages.shift();
         if (this.pendingTurns === 0 && this.liveTaskIds.size === 0) break;
       }
       this.pumping = false;
       sink.end();
     } catch (error) {
       this.pendingTurns = 0;
+      this.sentMessages = [];
+      this.rateLimitRejection = undefined;
       this.pumping = false;
       sink.end(error as Error);
     }
+  }
+
+  private async resumeAfterLimit(
+    sink: Pushable<TurnEvent>,
+    rejection: RejectedRateLimit,
+  ): Promise<boolean> {
+    this.rateLimitRejection = undefined;
+    if (this.sentMessages.length === 0 || this.resumeBudget <= 0) return false;
+    this.resumeBudget -= 1;
+    const abort = new AbortController();
+    this.waitAbort = abort;
+    sink.push({
+      type: "agent.rate_limit.wait.started",
+      agentSessionId: this.agentSessionId,
+      resetsAt: rejection.resetsAt,
+    });
+    const resumed = await this.sleep(
+      rateLimitWaitMs(rejection, Date.now(), RATE_LIMIT_RESUME_BUFFER_MS),
+      abort.signal,
+    );
+    if (this.waitAbort === abort) this.waitAbort = undefined;
+    sink.push({
+      type: "agent.rate_limit.wait.ended",
+      agentSessionId: this.agentSessionId,
+      resumed,
+    });
+    if (!resumed) return false;
+    for (const message of this.sentMessages) this.input.push(message);
+    this.pendingTurns = this.sentMessages.length;
+    return true;
   }
 }
